@@ -8,6 +8,7 @@ import "./index.css";
 // ✅ CRITICAL: Configure axios to use the correct backend URL
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 axios.defaults.withCredentials = true;
+axios.defaults.baseURL = API_URL + '/api';  // ✅ Added /api
 
 console.log('🔧 Axios baseURL configured:', axios.defaults.baseURL); // Debug log
 
