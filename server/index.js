@@ -19,11 +19,28 @@ import connect from "./src/config/db.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ✅ FIXED: Updated CORS configuration for production deployment
 const corsOptions = {
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.CLIENT_URL,
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ].filter(Boolean); // Remove undefined values
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["set-cookie"], // ✅ ADDED: Expose set-cookie header
 };
 app.use(cors(corsOptions));
 
@@ -94,6 +111,7 @@ cron.schedule("0 2 * * *", async () => {
 // Connect to db
 await connect();
 
+// ✅ FIXED: Updated session configuration for production
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "fallback-secret-change-me",
@@ -109,10 +127,17 @@ app.use(
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      domain: process.env.NODE_ENV === "production" ? undefined : "localhost", // ✅ ADDED: Allow cross-domain cookies
     },
     name: "sessionId",
+    proxy: process.env.NODE_ENV === "production", // ✅ ADDED: Trust proxy in production
   })
 );
+
+// ✅ ADDED: Trust proxy for production (needed for secure cookies behind reverse proxy)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 // Import routes AFTER environment is loaded
 import adminRoutes from "./src/routes/AdminRoutes.js";
