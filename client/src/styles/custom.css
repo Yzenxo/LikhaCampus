@@ -1,0 +1,159 @@
+/*General styling, wag galawin*/
+/*General styling, wag galawin*/
+@import "tailwindcss";
+@plugin "daisyui";
+
+:root {
+  --primary-blue: #00017a;
+  --primary-yellow: #ffde00;
+  --primary-red: #950606;
+}
+
+.gray-bg {
+  background-color: #e9ecef;
+}
+
+.bg-royal-blue {
+  background-color: var(--primary-blue);
+}
+
+.royal-blue {
+  color: var(--primary-blue);
+}
+
+.royal-blue:hover {
+  color: var(--primary-yellow);
+}
+
+.bg-yellow {
+  background-color: var(--primary-yellow);
+}
+
+.yellow {
+  color: var(--primary-yellow);
+}
+
+.red {
+  color: var(--primary-red);
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+  color: var(--primary-yellow);
+}
+
+.nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.text-primary {
+  color: var(--primary-blue);
+}
+
+.text-yellow {
+  color: var(--primary-yellow);
+}
+
+/*For user/student side styling*/
+/*For user/student side styling*/
+.btn-primary,
+.btn-warning,
+.btn-error {
+  transition:
+    transform 0.2s ease-out,
+    box-shadow 0.2s ease-out;
+  will-change: transform, box-shadow;
+}
+
+/* Primary (Navy Blue) */
+.btn-primary {
+  background-color: var(--primary-blue);
+  border: 1px solid transparent;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 1, 122, 0.5);
+}
+
+/* Warning (Yellow) */
+.btn-warning {
+  background-color: var(--primary-yellow);
+  border: 1px solid transparent;
+  color: #000;
+}
+
+.btn-warning:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 222, 0, 0.45);
+}
+
+.btn-error {
+  background-color: var(--primary-red);
+  border: 1px solid transparent;
+  color: #fff;
+}
+
+.btn-error:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(149, 6, 6, 0.5);
+}
+
+.btn-outline-primary {
+  border: 1px solid var(--primary-blue);
+  color: var(--primary-blue);
+  background-color: #fff;
+}
+
+.btn-outline-primary:hover {
+  border: 1px solid var(--primary-blue);
+  background-color: var(--primary-blue);
+  color: #fff;
+}
+
+.btn-outline-error {
+  border: 1px solid var(--primary-red);
+  color: var(--primary-red);
+  background-color: #fff;
+}
+
+.btn-outline-error:hover {
+  border: 1px solid var(--primary-red);
+  background-color: var(--primary-red);
+  color: #fff;
+}
+
+/*For admin side styling*/
+/*For admin side styling*/
+.admin-sidebar .nav-link {
+  color: #ffffffff;
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+  color: var(--primary-yellow);
+}
+
+.rule {
+  border-top: 2px solid #ffffff;
+}
+
+.admin-sidebar .nav-link.logout {
+  color: red;
+}
+
+.admin-sidebar .nav-link.logout:hover {
+  color: #a71b1bff;
+}
+
+@media (max-width: 991px) {
+  .nav-center,
+  .nav-right {
+    width: 100%;
+    justify-content: center;
+  }
+}

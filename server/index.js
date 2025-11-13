@@ -1,0 +1,163 @@
+import dotenv from "dotenv";
+dotenv.config();
+
+import { configureCloudinary } from "./src/config/cloudinary.js";
+configureCloudinary();
+
+import MongoStore from "connect-mongo";
+import cors from "cors";
+import express from "express";
+import rateLimit from "express-rate-limit";
+import session from "express-session";
+import helmet from "helmet";
+import mongoose from "mongoose";
+import cron from "node-cron";
+
+import { cleanupDeactivatedAccounts } from "./jobs/cleanupDeactivatedAccounts.js";
+import connect from "./src/config/db.js";
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+const corsOptions = {
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.use(cors(corsOptions));
+
+app.use(helmet({ crossOriginResourcePolicy: false }));
+
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.header("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
+  express.static("uploads")
+);
+
+app.use((req, res, next) => {
+  if (req.is("multipart/form-data")) {
+    return next();
+  }
+  express.json()(req, res, next);
+});
+
+app.use((req, res, next) => {
+  if (req.is("multipart/form-data")) {
+    return next();
+  }
+  express.urlencoded({ extended: true })(req, res, next);
+});
+
+const sanitize = (obj) => {
+  if (obj && typeof obj === "object") {
+    for (const key in obj) {
+      if (/^\$/.test(key) || /\./.test(key)) {
+        delete obj[key];
+      } else {
+        sanitize(obj[key]);
+      }
+    }
+  }
+  return obj;
+};
+
+app.use((req, res, next) => {
+  if (req.body) sanitize(req.body);
+  if (req.params) sanitize(req.params);
+  if (req.query) {
+    for (const key in req.query) {
+      if (/^\$/.test(key) || /\./.test(key)) {
+        delete req.query[key];
+      } else if (typeof req.query[key] === "object") {
+        sanitize(req.query[key]);
+      }
+    }
+  }
+  next();
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: "Too many login attempts, please try again later.",
+});
+
+cron.schedule("0 2 * * *", async () => {
+  console.log("Running deactivated accounts cleanup...");
+  await cleanupDeactivatedAccounts();
+});
+
+// Connect to db
+await connect();
+
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "fallback-secret-change-me",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      client: mongoose.connection.getClient(),
+      mongoUrl: process.env.MONGO_URI,
+      ttl: 7 * 24 * 60 * 60,
+    }),
+    cookie: {
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
+    name: "sessionId",
+  })
+);
+
+// Import routes AFTER environment is loaded
+import adminRoutes from "./src/routes/AdminRoutes.js";
+import announcementRoutes from "./src/routes/AnnouncementRoutes.js";
+import assessmentRoutes from "./src/routes/AssessmentRoutes.js";
+import authRoutes from "./src/routes/AuthRoutes.js";
+import contributionsRoutes from "./src/routes/ContributionsRoutes.js";
+import featuredArtistRoutes from "./src/routes/FeaturedArtistRoutes.js";
+import forgotPasswordRoutes from "./src/routes/ForgotPasswordRoutes.js";
+import forumRoutes from "./src/routes/ForumRoutes.js";
+import guidelinesRoutes from "./src/routes/GuidelinesRoutes.js";
+import homeRoutes from "./src/routes/HomeRoutes.js";
+import notificationRoutes from "./src/routes/NotificationRoutes.js";
+import projectRoutes from "./src/routes/ProjectRoutes.js";
+import studentDbRoutes from "./src/routes/StudentDbRoutes.js";
+import userRoutes from "./src/routes/UserRoutes.js";
+
+app.use("/api/auth", authLimiter, authRoutes, forgotPasswordRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/stats", homeRoutes);
+app.use("/api/forum", forumRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/assessment", assessmentRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/featured-artist", featuredArtistRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/announcements", announcementRoutes);
+app.use("/api/contributions", contributionsRoutes);
+app.use("/api/guidelines", guidelinesRoutes);
+app.use("/api/student-database", studentDbRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    message:
+      process.env.NODE_ENV === "production"
+        ? "Something went wrong"
+        : err.message,
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
