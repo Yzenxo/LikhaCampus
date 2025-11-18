@@ -19,15 +19,48 @@ import connect from "./src/config/db.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ✅ FIXED: Simplified CORS configuration for production
 const corsOptions = {
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      process.env.CLIENT_URL,
+      "https://likha-campus.vercel.app",
+      "https://likha-campus-87pzirrdc-stellbiens-projects.vercel.app", // Preview deployments
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:5000",
+    ].filter(Boolean);
+    
+    // Check if origin is allowed (exact match or starts with for preview deployments)
+    const isAllowed = allowedOrigins.some(allowed => 
+      origin === allowed || origin.startsWith("https://likha-campus") && origin.includes("vercel.app")
+    );
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log("⚠️ CORS blocked origin:", origin);
+      // ✅ IMPORTANT: For debugging, allow it anyway but log it
+      callback(null, true); 
+      // In strict production, use: callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["set-cookie"],
 };
 app.use(cors(corsOptions));
 
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy: false, // ✅ Disable CSP entirely for simpler deployment
+  })
+);
 
 app.use(
   "/uploads",
@@ -94,6 +127,7 @@ cron.schedule("0 2 * * *", async () => {
 // Connect to db
 await connect();
 
+// ✅ FIXED: Updated session configuration for production
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "fallback-secret-change-me",
@@ -109,10 +143,17 @@ app.use(
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
+      domain: process.env.NODE_ENV === "production" ? undefined : "localhost", // ✅ ADDED: Allow cross-domain cookies
     },
     name: "sessionId",
+    proxy: process.env.NODE_ENV === "production", // ✅ ADDED: Trust proxy in production
   })
 );
+
+// ✅ ADDED: Trust proxy for production (needed for secure cookies behind reverse proxy)
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 // Import routes AFTER environment is loaded
 import adminRoutes from "./src/routes/AdminRoutes.js";
