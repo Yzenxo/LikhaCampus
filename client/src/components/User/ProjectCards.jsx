@@ -137,8 +137,8 @@ const ProjectCard = ({
               <p className="text-sm font-semibold">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(e);
-                    window.location.href = `/profile/${author.username}`;
+                    e.stopPropagation();
+                    navigate = `/profile/${author.username}`;
                   }}
                   className="text-primary hover:underline cursor-pointer"
                 >
