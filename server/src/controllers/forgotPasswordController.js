@@ -40,7 +40,8 @@ export const requestPasswordReset = async (req, res) => {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: #00017a; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; padding: 15px 30px; background: #00017a; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+            .button { display: inline-block; padding: 15px 30px; background: #00017a; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+            .button-content {color: white;}
             .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
           </style>
         </head>
@@ -54,7 +55,7 @@ export const requestPasswordReset = async (req, res) => {
               <p>You requested to reset your LikhaCampus password.</p>
               <p>Click the button below to create a new password:</p>
 
-              <a href="${resetUrl}" class="button">Reset Password</a>
+              <a href="${resetUrl}" class="button"><p class="button-content">Reset Password</p></a>
 
               <p>If you didn't request this, you can safely ignore this email.</p>
         </div>
