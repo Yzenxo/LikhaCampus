@@ -505,14 +505,15 @@ const Register = () => {
                   </div>
 
                   {/* TERMS */}
-                  <div className="text-xs text-gray-600 text-center py-2">
-                    I agree to the{" "}
+                  <div className="text-xs text-gray-600 py-2">
+                    Please read the{" "}
                     <span
                       className="text-primary font-semibold cursor-pointer hover:underline"
                       onClick={() => modalRef.current.open()}
                     >
                       Terms & Conditions
-                    </span>
+                    </span>{" "}
+                    before continuing
                   </div>
 
                   <TermsNConditionsModal

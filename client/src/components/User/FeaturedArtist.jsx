@@ -37,7 +37,7 @@ const FeaturedArtist = () => {
 
   if (loading) {
     return (
-      <div className="card bg-gradient-to-br from-[#00017a] to-[#0002b3] shadow-lg p-6">
+      <div className="card bg-gradient-to-br from-[#00017a] to-[#0002b3] shadow-lg p-4 sm:p-6">
         <div className="flex justify-center items-center py-8">
           <span className="loading loading-spinner loading-md text-white"></span>
         </div>
@@ -51,21 +51,21 @@ const FeaturedArtist = () => {
 
   if (!featuredArtist) {
     return (
-      <div className="card bg-gradient-to-br from-[#00017a] to-[#0002b3] shadow-lg p-6">
+      <div className="card bg-gradient-to-br from-[#00017a] to-[#0002b3] shadow-lg p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="w-6 h-6 text-yellow-400"
+            className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
-          <h3 className="text-xl font-bold text-white">
+          <h3 className="text-lg sm:text-xl font-bold text-white">
             Featured Artist of the Week
           </h3>
         </div>
-        <p className="text-white/80 text-center py-4">
+        <p className="text-white/80 text-center py-4 text-sm sm:text-base">
           No featured artist this week. Check back next Monday!
         </p>
       </div>
@@ -77,12 +77,12 @@ const FeaturedArtist = () => {
   return (
     <>
       {/* SECTION HEADER */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-yellow-400 text-[#00017a] px-3 py-1.5 rounded-full font-semibold text-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-yellow-400 text-[#00017a] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold text-xs">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
+              className="h-3.5 w-3.5 sm:h-4 sm:w-4"
               viewBox="0 0 20 20"
               fill="currentColor"
             >
@@ -90,14 +90,14 @@ const FeaturedArtist = () => {
             </svg>
             Featured Artist
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#00017a]">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#00017a]">
             This Week's Spotlight
           </h2>
         </div>
       </div>
 
       {/* COMPACT FEATURED CARD */}
-      <div className="relative bg-gradient-to-br from-[#00017a] via-[#000050] to-[#00017a] rounded-xl overflow-hidden shadow-xl h-[280px] sm:h-[320px]">
+      <div className="relative bg-gradient-to-br from-[#00017a] via-[#000050] to-[#00017a] rounded-lg sm:rounded-xl overflow-hidden shadow-xl">
         {/* BACKGROUND PATTERN */}
         <div className="absolute inset-0 opacity-5">
           <div
@@ -108,10 +108,10 @@ const FeaturedArtist = () => {
           ></div>
         </div>
 
-        <div className="relative grid grid-cols-1 sm:grid-cols-5 h-full">
-          {/* LEFT */}
+        <div className="relative flex flex-col sm:grid sm:grid-cols-5">
+          {/* LEFT - Avatar */}
           <div
-            className="relative sm:col-span-2 h-[140px] sm:h-full overflow-hidden group cursor-pointer"
+            className="relative sm:col-span-2 h-48 sm:h-64 md:h-80 overflow-hidden group cursor-pointer"
             onClick={() => navigate(`/profile/${user.username}`)}
           >
             <img
@@ -122,30 +122,34 @@ const FeaturedArtist = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
           </div>
 
-          {/* RIGHT */}
-          <div className="sm:col-span-3 p-6 flex flex-col justify-center text-white relative">
-            <div className="mb-4">
+          {/* RIGHT - Info */}
+          <div className="sm:col-span-3 p-4 sm:p-5 md:p-6 flex flex-col justify-center text-white relative">
+            <div className="mb-3 sm:mb-4">
               <button
                 onClick={() => navigate(`/profile/${user.username}`)}
-                className="text-xl sm:text-2xl font-bold mb-1 hover:text-yellow-400 transition-colors text-left"
+                className="text-lg sm:text-xl md:text-2xl font-bold mb-1 hover:text-yellow-400 transition-colors text-left"
               >
                 {user.firstName} {user.lastName}
               </button>
-              <p className="text-gray-300 text-sm">@{user.username}</p>
+              <p className="text-gray-300 text-xs sm:text-sm">
+                @{user.username}
+              </p>
             </div>
 
             {/* BIO */}
             {user.bio && (
-              <p className="text-gray-200 text-sm leading-relaxed mb-4 line-clamp-2">
+              <p className="text-gray-200 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
                 {user.bio}
               </p>
             )}
 
             {/* STATS INLINE */}
-            <div className="flex gap-4 mb-4">
+            <div className="flex gap-3 sm:gap-4 mb-3 sm:mb-4">
               <div className="flex items-center gap-2">
-                <div className="bg-yellow-400 text-[#00017a] rounded-lg px-3 py-1">
-                  <span className="font-bold text-lg">{projectCount}</span>
+                <div className="bg-yellow-400 text-[#00017a] rounded-lg px-2.5 sm:px-3 py-1">
+                  <span className="font-bold text-base sm:text-lg">
+                    {projectCount}
+                  </span>
                 </div>
                 <span className="text-xs text-gray-300">
                   {projectCount === 1 ? "Project" : "Projects"}
@@ -154,16 +158,16 @@ const FeaturedArtist = () => {
             </div>
 
             {/* CTA */}
-            <div className="flex gap-2">
+            <div className="flex flex-col xs:flex-row gap-2">
               <button
                 onClick={() => navigate(`/profile/${user.username}`)}
-                className="btn btn-warning btn-sm text-[#00017a] font-semibold"
+                className="btn btn-warning btn-sm text-[#00017a] font-semibold flex-1 xs:flex-initial"
               >
                 View Portfolio
               </button>
               <button
                 onClick={() => navigate(`/projects`)}
-                className="btn btn-outline btn-warning btn-sm hover:bg-yellow-400 hover:text-[#00017a]"
+                className="btn btn-outline btn-warning btn-sm hover:bg-yellow-400 hover:text-[#00017a] flex-1 xs:flex-initial"
               >
                 Projects
               </button>
@@ -173,7 +177,7 @@ const FeaturedArtist = () => {
       </div>
 
       {/* BOTTOM TIP */}
-      <div className="mt-3 bg-yellow-400/10 border-l-4 border-yellow-400 rounded-lg p-3">
+      <div className="mt-3 bg-yellow-400/10 border-l-4 border-yellow-400 rounded-lg p-2.5 sm:p-3">
         <p className="text-xs text-gray-700">
           <span className="font-semibold text-[#00017a]">
             Want to be featured?

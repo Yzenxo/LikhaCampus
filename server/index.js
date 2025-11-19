@@ -24,7 +24,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     const allowedOrigins = [
       process.env.CLIENT_URL,
       "https://likha-campus.vercel.app",
@@ -33,18 +33,21 @@ const corsOptions = {
       "http://localhost:3000",
       "http://localhost:5000",
     ].filter(Boolean);
-    
+
     // Check if origin is allowed (exact match or starts with for preview deployments)
-    const isAllowed = allowedOrigins.some(allowed => 
-      origin === allowed || origin.startsWith("https://likha-campus") && origin.includes("vercel.app")
+    const isAllowed = allowedOrigins.some(
+      (allowed) =>
+        origin === allowed ||
+        (origin.startsWith("https://likha-campus") &&
+          origin.includes("vercel.app"))
     );
-    
+
     if (isAllowed) {
       callback(null, true);
     } else {
       console.log("⚠️ CORS blocked origin:", origin);
       // ✅ IMPORTANT: For debugging, allow it anyway but log it
-      callback(null, true); 
+      callback(null, true);
       // In strict production, use: callback(new Error("Not allowed by CORS"));
     }
   },

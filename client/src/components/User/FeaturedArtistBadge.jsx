@@ -29,7 +29,7 @@ const FeaturedArtistBadge = ({ userId }) => {
 
   return (
     <>
-      <div className="inline-flex items-center gap-1.5 bg-[#ffde00] text-black px-2 py-0.5 rounded text-xs font-semibold">
+      <div className="inline-flex items-center gap-1.5 bg-[#ffde00] text-black px-2 py-0.5 rounded text-xs font-semibold mt-1.5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className="h-3 w-3"

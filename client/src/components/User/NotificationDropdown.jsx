@@ -294,7 +294,7 @@ const NotificationDropdown = () => {
 
         {/* DROPDOWN */}
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col">
+          <div className="fixed sm:absolute right-4 sm:right-0 left-4 sm:left-auto mt-2 w-auto sm:w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col">
             {/* HEADER */}
             <div className="p-4 border-b border-gray-200 flex justify-between items-center">
               <h3 className="font-semibold text-gray-800">Notifications</h3>
