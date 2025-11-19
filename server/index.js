@@ -181,6 +181,10 @@ app.use("/api/contributions", contributionsRoutes);
 app.use("/api/guidelines", guidelinesRoutes);
 app.use("/api/student-database", studentDbRoutes);
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
@@ -193,10 +197,6 @@ app.use((err, req, res, next) => {
         ? "Something went wrong"
         : err.message,
   });
-});
-
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
 });
 
 app.listen(PORT, () => {
