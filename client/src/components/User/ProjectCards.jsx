@@ -138,7 +138,7 @@ const ProjectCard = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate = `/profile/${author.username}`;
+                    navigate(`/profile/${author.username}`);
                   }}
                   className="text-primary hover:underline cursor-pointer"
                 >
