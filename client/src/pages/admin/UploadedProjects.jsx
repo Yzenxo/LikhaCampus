@@ -355,14 +355,14 @@ const ProjectManagementPanel = () => {
             </div>
 
             {/* BADGES */}
-            <div className="flex gap-2 mb-4">
-              <span className="badge badge-primary">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="badge badge-primary whitespace-nowrap px-3">
                 {selectedProject.skill}
               </span>
-              <span className="badge badge-secondary">
+              <span className="badge badge-secondary whitespace-nowrap px-3">
                 {selectedProject.category}
               </span>
-              <span className="badge badge-outline">
+              <span className="badge badge-outline whitespace-nowrap px-3">
                 {new Date(selectedProject.createdAt).toLocaleDateString()}
               </span>
             </div>
