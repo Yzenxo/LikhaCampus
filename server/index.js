@@ -32,7 +32,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc)
     if (!origin) return callback(null, true);
-    
+
     // Check if origin matches any allowed origin or is a Vercel preview deployment
     if (
       allowedOrigins.includes(origin) ||

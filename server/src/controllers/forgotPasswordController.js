@@ -51,10 +51,13 @@ export const requestPasswordReset = async (req, res) => {
             </div>
             <div class="content">
               <p>Hi ${user.firstName},</p>
-              <p>Your password has been successfully reset.</p>
-              <p>You can now log in to LikhaCampus with your new password.</p>
-              <p>If you didn't make this change, please contact us immediately.</p>
-            </div>
+              <p>You requested to reset your LikhaCampus password.</p>
+              <p>Click the button below to create a new password:</p>
+
+              <a href="${resetUrl}" class="button">Reset Password</a>
+
+              <p>If you didn't request this, you can safely ignore this email.</p>
+        </div>
             <div class="footer">
               <p>LikhaCampus - Connect. Create. Aspire. Transform.</p>
               <p>This is an automated email. Please do not reply.</p>
