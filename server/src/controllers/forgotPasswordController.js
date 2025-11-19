@@ -26,7 +26,7 @@ export const requestPasswordReset = async (req, res) => {
     user.passwordResetExpires = Date.now() + 3600000;
     await user.save();
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
     const emailContent = {
       to: user.email,
@@ -40,14 +40,14 @@ export const requestPasswordReset = async (req, res) => {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: #00017a; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+            .button { display: inline-block; padding: 15px 30px; background: #00017a; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1>✅ Password Reset Successful</h1>
+              <h1>Password Reset Request</h1>
             </div>
             <div class="content">
               <p>Hi ${user.firstName},</p>
