@@ -143,7 +143,7 @@ export const resetPassword = async (req, res) => {
               <p>You can now log in to LikhaCampus with your new password.</p>
               <p>If you didn't make this change, please contact us immediately.</p>
               <div class="footer">
-                <p>© 2025 LikhaCampus - Where Campus Becomes Canvas</p>
+                <p>© 2025 LikhaCampus - Connect. Create. Aspire. Transform.</p>
               </div>
             </div>
           </div>
