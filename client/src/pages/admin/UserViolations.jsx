@@ -266,11 +266,9 @@ const UserViolations = () => {
                   onChange={(e) => setSelectedAction(e.target.value)}
                 >
                   <option value="">Choose an action...</option>
-                  <option value="warning">⚠️ Issue Warning Only</option>
-                  <option value="suspend">
-                    🔒 Suspend Account (Temporary)
-                  </option>
-                  <option value="ban">⛔ Permanent Ban</option>
+                  <option value="warning">Issue Warning Only</option>
+                  <option value="suspend">Suspend Account (Temporary)</option>
+                  <option value="ban">Permanent Ban</option>
                 </select>
               </div>
 
