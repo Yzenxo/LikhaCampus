@@ -86,15 +86,17 @@ const ExcelUploadPanel = () => {
   return (
     <>
       <div className="container mx-auto p-3 space-y-6">
-        <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
-          <Upload size={24} /> Student Database Management
-        </h2>
-        <div className="card bg-white shadow-md p-8">
-          <p className="text-gray-600 mb-6">
+        <div className="mb-6">
+          <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
+            <Upload size={24} /> Student Database Management
+          </h2>
+          <p className="text-gray-600">
             Upload an Excel file containing student information to validate
             registrations
           </p>
+        </div>
 
+        <div className="card bg-white shadow-md p-8">
           {/* INSTRUCTIONS */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-blue-900 mb-2">

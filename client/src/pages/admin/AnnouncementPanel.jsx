@@ -179,87 +179,88 @@ const AnnouncementPanel = () => {
   return (
     <>
       <div className="container mx-auto p-3 space-y-10">
-        <div>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
-              <Megaphone size={24} /> Announcements
-            </h2>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowAnnouncementModal(true)}
-            >
-              + Add Announcement
-            </button>
-          </div>
+        <div className="flex justify-between items-center mb-0">
+          <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
+            <Megaphone size={24} /> Announcements
+          </h2>
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowAnnouncementModal(true)}
+          >
+            + Add Announcement
+          </button>
+        </div>
+        <p className="text-gray-600">
+          Create and manage announcements for the community
+        </p>
 
-          <div className="card bg-base-100 shadow-md overflow-x-auto">
-            <table className="table w-full">
-              <thead>
+        <div className="card bg-base-100 shadow-md overflow-x-auto">
+          <table className="table w-full">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Content</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {announcements.length === 0 ? (
                 <tr>
-                  <th>Image</th>
-                  <th>Title</th>
-                  <th>Date</th>
-                  <th>Content</th>
-                  <th>Actions</th>
+                  <td colSpan="5" className="text-center py-12 text-gray-500">
+                    No announcements yet. Create your first one!
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {announcements.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="text-center py-12 text-gray-500">
-                      No announcements yet. Create your first one!
+              ) : (
+                announcements.map((a) => (
+                  <tr key={a._id}>
+                    <td>
+                      <img
+                        src={a.imageUrl}
+                        alt={a.title}
+                        className="w-24 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                        onClick={() => handleViewClick(a)}
+                      />
+                    </td>
+                    <td>
+                      <div
+                        className="max-w-xs truncate cursor-pointer hover:text-primary transition font-medium"
+                        onClick={() => handleViewClick(a)}
+                        title={a.title}
+                      >
+                        {a.title}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap">
+                      {new Date(a.date || a.createdAt).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <div className="max-w-md truncate" title={a.content}>
+                        {a.content}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex gap-2 whitespace-nowrap">
+                        <button
+                          className="btn btn-xs btn-warning"
+                          onClick={() => handleEditClick(a)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-xs btn-error"
+                          onClick={() => handleDeleteClick(a)}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : (
-                  announcements.map((a) => (
-                    <tr key={a._id}>
-                      <td>
-                        <img
-                          src={a.imageUrl}
-                          alt={a.title}
-                          className="w-24 h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
-                          onClick={() => handleViewClick(a)}
-                        />
-                      </td>
-                      <td>
-                        <div
-                          className="max-w-xs truncate cursor-pointer hover:text-primary transition font-medium"
-                          onClick={() => handleViewClick(a)}
-                          title={a.title}
-                        >
-                          {a.title}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap">
-                        {new Date(a.date || a.createdAt).toLocaleDateString()}
-                      </td>
-                      <td>
-                        <div className="max-w-md truncate" title={a.content}>
-                          {a.content}
-                        </div>
-                      </td>
-                      <td>
-                        <div className="flex gap-2 whitespace-nowrap">
-                          <button
-                            className="btn btn-xs btn-warning"
-                            onClick={() => handleEditClick(a)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-xs btn-error"
-                            onClick={() => handleDeleteClick(a)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
 
         {/* CREATE/EDIT ANNOUNCEMENT MODAL */}

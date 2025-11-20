@@ -174,7 +174,7 @@ const CommunityGuidelines = () => {
   return (
     <>
       <div className="container mx-auto p-3 space-y-10">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-0">
           <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
             <BookAlert size={24} /> Community Guidelines
           </h2>
@@ -189,6 +189,7 @@ const CommunityGuidelines = () => {
             + Add New Guideline
           </button>
         </div>
+        <p className="text-gray-600">Manage and update the platform’s rules</p>
 
         {/* CREATE/EDIT MODAL */}
         {showModal && (

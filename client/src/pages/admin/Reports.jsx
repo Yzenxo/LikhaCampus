@@ -44,11 +44,16 @@ const Reports = () => {
   return (
     <>
       <div className="container mx-auto p-3 space-y-10">
-        <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
-          <BarChart2 size={20} /> Reports
-        </h2>
+        <div className="mb-6">
+          <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
+            <BarChart2 size={20} /> Reports
+          </h2>
+          <p className="text-gray-600">
+            View platform statistics and activity insights
+          </p>
+        </div>
         {/* STATS */}
-        <div className="stats shadow w-full">
+        <div className="stats bg-white shadow w-full">
           <div className="stat">
             <div className="stat-title">Total Users</div>
             <div className="stat-value text-primary">{stats.totalUsers}</div>

@@ -143,7 +143,7 @@ const UserViolations = () => {
               key={idx}
               className="bg-base-100 p-3 rounded-lg mb-2 border border-base-300"
             >
-              {/* Reporter Info */}
+              {/* REPORTER INFO */}
               <div className="flex items-center gap-2 mb-2">
                 <span className="badge badge-sm badge-ghost">
                   Report #{idx + 1}
@@ -155,7 +155,7 @@ const UserViolations = () => {
                 </span>
               </div>
 
-              {/* Reason */}
+              {/* REASON */}
               <div className="mb-2">
                 <span className="font-semibold text-xs text-gray-600">
                   Reason:
@@ -163,7 +163,7 @@ const UserViolations = () => {
                 <p className="text-sm text-gray-800">{report.reason}</p>
               </div>
 
-              {/* Details */}
+              {/* DETAILS */}
               {report.details && (
                 <div className="mb-2">
                   <span className="font-semibold text-xs text-gray-600">
@@ -175,7 +175,7 @@ const UserViolations = () => {
                 </div>
               )}
 
-              {/* Date */}
+              {/* DATE */}
               <div className="text-xs text-gray-400">
                 {new Date(report.reportedAt).toLocaleString()}
               </div>
@@ -218,7 +218,7 @@ const UserViolations = () => {
         </div>
 
         {/* STATS */}
-        <div className="stats shadow mb-6">
+        <div className="stats bg-white shadow mb-6">
           <div className="stat">
             <div className="stat-title">Users Flagged for Review</div>
             <div className="stat-value text-error">{reportedUsers.length}</div>

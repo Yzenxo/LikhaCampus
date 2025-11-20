@@ -81,11 +81,13 @@ const UserRoleManagement = () => {
   return (
     <>
       <div className="container mx-auto p-3 space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
+        <div className="mb-6">
+          <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
             <Users size={24} /> User Role Management
           </h2>
-          <div className="badge bg-yellow">{users.length} Total Users</div>
+          <p className="text-gray-600">
+            Assign, update, and control user permissions
+          </p>
         </div>
 
         {/* SEARCH */}
@@ -98,7 +100,7 @@ const UserRoleManagement = () => {
         />
 
         {/* STATS */}
-        <div className="stats shadow w-full">
+        <div className="stats bg-white shadow w-full">
           <div className="stat">
             <div className="stat-title">Total Users</div>
             <div className="stat-value text-primary">{users.length}</div>

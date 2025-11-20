@@ -102,13 +102,14 @@ const ProjectManagementPanel = () => {
   return (
     <>
       <div className="container mx-auto p-3 space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="mb-6">
           <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
             <Folder size={24} /> Uploaded Projects
           </h2>
-          <div className="badge bg-yellow">
-            {projects.length} Total Projects
-          </div>
+          <p className="text-gray-600">
+            Showcase user-submitted works and track their project activity on
+            the platform
+          </p>
         </div>
 
         {/* Search and Filter */}
@@ -202,7 +203,7 @@ const ProjectManagementPanel = () => {
         </div>
 
         {/* Stats */}
-        <div className="stats shadow w-full">
+        <div className="stats bg-white shadow w-full">
           <div className="stat">
             <div className="stat-title">Total Projects</div>
             <div className="stat-value text-primary">{projects.length}</div>

@@ -218,7 +218,7 @@ const ProjectViolations = () => {
         </div>
 
         {/* STATS */}
-        <div className="stats shadow mb-6">
+        <div className="stats bg-white shadow mb-6">
           <div className="stat">
             <div className="stat-title">Total Reported Projects</div>
             <div className="stat-value text-error">
