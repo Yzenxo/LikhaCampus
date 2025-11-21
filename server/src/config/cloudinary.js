@@ -96,7 +96,7 @@ const videoStorage = new CloudinaryStorage({
 const announcementStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "likhow/announcements",
+    folder: "likhacampus/announcements",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [
       { width: 1920, height: 1080, crop: "limit" },

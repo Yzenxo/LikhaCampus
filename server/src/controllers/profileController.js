@@ -87,7 +87,7 @@ export const updateProfile = async (req, res) => {
 
       if (
         currentUser.avatar?.publicId &&
-        currentUser.avatar.publicId.startsWith("likhow/")
+        currentUser.avatar.publicId.startsWith("likhacampus/")
       ) {
         try {
           console.log("Deleting old avatar:", currentUser.avatar.publicId);
