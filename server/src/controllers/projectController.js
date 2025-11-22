@@ -35,7 +35,7 @@ export const uploadProject = async (req, res) => {
 
       if (isVideo) {
         const result = await cloudinary.uploader.upload(file.path, {
-          folder: "likhow/projects/videos",
+          folder: "likhacampus/projects/videos",
           resource_type: "video",
           transformation: [
             { width: 1280, crop: "limit" },
@@ -55,7 +55,7 @@ export const uploadProject = async (req, res) => {
         });
       } else {
         const result = await cloudinary.uploader.upload(file.path, {
-          folder: "likhow/projects/images",
+          folder: "likhacampus/projects/images",
           transformation: [
             { width: 1920, height: 1080, crop: "limit" },
             { quality: "auto:good" },
