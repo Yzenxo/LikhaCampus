@@ -124,6 +124,9 @@ cron.schedule("0 2 * * *", async () => {
 // Connect to db
 await connect();
 
+// Call to featured artist
+scheduleFeaturedArtistSelection();
+
 // ✅ CRITICAL: Trust proxy MUST be set BEFORE session configuration
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
@@ -166,6 +169,8 @@ import notificationRoutes from "./src/routes/NotificationRoutes.js";
 import projectRoutes from "./src/routes/ProjectRoutes.js";
 import studentDbRoutes from "./src/routes/StudentDbRoutes.js";
 import userRoutes from "./src/routes/UserRoutes.js";
+import { scheduleFeaturedArtistSelection } from "./src/schedulers/featuredArtistScheduler.js";
+import "./src/schedulers/unsuspendUsers.js";
 
 app.use("/api/auth", authLimiter, authRoutes, forgotPasswordRoutes);
 app.use("/api/user", userRoutes);

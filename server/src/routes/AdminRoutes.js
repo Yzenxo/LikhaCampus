@@ -7,6 +7,7 @@ import {
   getReportedUsers,
   getSemesterSettings,
   takeActionOnUser,
+  unsuspendUser,
   updateSemesterSettings,
   updateUserRole,
 } from "../controllers/adminController.js";
@@ -25,5 +26,6 @@ router.put("/settings/semester", updateSemesterSettings);
 router.get("/reported-users", getReportedUsers);
 router.post("/users/:userId/dismiss-reports", dismissUserReports);
 router.post("/users/:userId/take-action", takeActionOnUser);
+router.patch("/users/:id/un-suspend", unsuspendUser);
 
 export default router;

@@ -178,23 +178,25 @@ const AnnouncementPanel = () => {
 
   return (
     <>
-      <div className="container mx-auto p-3 space-y-10">
-        <div className="flex justify-between items-center mb-0">
-          <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
-            <Megaphone size={24} /> Announcements
+      <div className="container mx-auto p-3 space-y-6 sm:space-y-10">
+        {/* HEADER - Responsive */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-0">
+          <h2 className="text-xl sm:text-2xl royal-blue font-bold flex items-center gap-2">
+            <Megaphone size={20} className="sm:w-6 sm:h-6" /> Announcements
           </h2>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm sm:btn-md w-full sm:w-auto"
             onClick={() => setShowAnnouncementModal(true)}
           >
             + Add Announcement
           </button>
         </div>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600">
           Create and manage announcements for the community
         </p>
 
-        <div className="card bg-base-100 shadow-md overflow-x-auto">
+        {/* TABLE - Mobile Card View, Desktop Table */}
+        <div className="hidden sm:block card bg-base-100 shadow-md overflow-x-auto">
           <table className="table w-full">
             <thead>
               <tr>
@@ -263,53 +265,106 @@ const AnnouncementPanel = () => {
           </table>
         </div>
 
+        {/* MOBILE CARD VIEW */}
+        <div className="sm:hidden space-y-4">
+          {announcements.length === 0 ? (
+            <div className="card bg-base-100 shadow-md">
+              <div className="card-body text-center py-12 text-gray-500">
+                No announcements yet. Create your first one!
+              </div>
+            </div>
+          ) : (
+            announcements.map((a) => (
+              <div key={a._id} className="card bg-base-100 shadow-md">
+                <figure className="px-4 pt-4">
+                  <img
+                    src={a.imageUrl}
+                    alt={a.title}
+                    className="rounded-lg w-full h-48 object-cover cursor-pointer"
+                    onClick={() => handleViewClick(a)}
+                  />
+                </figure>
+                <div className="card-body p-4">
+                  <h3
+                    className="card-title text-base cursor-pointer hover:text-primary"
+                    onClick={() => handleViewClick(a)}
+                  >
+                    {a.title}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {new Date(a.date || a.createdAt).toLocaleDateString()}
+                  </p>
+                  <p className="text-sm line-clamp-2">{a.content}</p>
+                  <div className="card-actions justify-end mt-2">
+                    <button
+                      className="btn btn-sm btn-warning"
+                      onClick={() => handleEditClick(a)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-error"
+                      onClick={() => handleDeleteClick(a)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* REST OF YOUR MODALS STAY THE SAME */}
         {/* CREATE/EDIT ANNOUNCEMENT MODAL */}
         {showAnnouncementModal && (
           <dialog open className="modal">
-            <div className="modal-box space-y-3">
+            <div className="modal-box max-w-lg">
               <h3 className="font-bold text-lg">
                 {editMode ? "Edit Announcement" : "New Announcement"}
               </h3>
-              <input
-                type="text"
-                placeholder="Title"
-                className="input input-bordered w-full"
-                value={newAnnouncement.title}
-                onChange={(e) =>
-                  setNewAnnouncement({
-                    ...newAnnouncement,
-                    title: e.target.value,
-                  })
-                }
-              />
-              <textarea
-                placeholder="Content"
-                className="textarea textarea-bordered w-full"
-                rows="4"
-                value={newAnnouncement.content}
-                onChange={(e) =>
-                  setNewAnnouncement({
-                    ...newAnnouncement,
-                    content: e.target.value,
-                  })
-                }
-              ></textarea>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp"
-                className="file-input file-input-bordered w-full"
-                onChange={(e) =>
-                  setNewAnnouncement({
-                    ...newAnnouncement,
-                    imageFile: e.target.files[0],
-                  })
-                }
-              />
-              {editMode && (
-                <p className="text-sm text-gray-500">
-                  Leave image empty to keep the current image
-                </p>
-              )}
+              <div className="space-y-3 mt-4">
+                <input
+                  type="text"
+                  placeholder="Title"
+                  className="input input-bordered w-full"
+                  value={newAnnouncement.title}
+                  onChange={(e) =>
+                    setNewAnnouncement({
+                      ...newAnnouncement,
+                      title: e.target.value,
+                    })
+                  }
+                />
+                <textarea
+                  placeholder="Content"
+                  className="textarea textarea-bordered w-full"
+                  rows="4"
+                  value={newAnnouncement.content}
+                  onChange={(e) =>
+                    setNewAnnouncement({
+                      ...newAnnouncement,
+                      content: e.target.value,
+                    })
+                  }
+                ></textarea>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  className="file-input file-input-bordered w-full"
+                  onChange={(e) =>
+                    setNewAnnouncement({
+                      ...newAnnouncement,
+                      imageFile: e.target.files[0],
+                    })
+                  }
+                />
+                {editMode && (
+                  <p className="text-sm text-gray-500">
+                    Leave image empty to keep the current image
+                  </p>
+                )}
+              </div>
               <div className="modal-action">
                 <button
                   className="btn btn-primary"
@@ -341,7 +396,7 @@ const AnnouncementPanel = () => {
               className="modal-box max-w-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="font-bold text-2xl mb-4 break-words">
+              <h3 className="font-bold text-xl sm:text-2xl mb-4 break-words">
                 {selectedAnnouncement.title}
               </h3>
               <p className="text-sm text-gray-500 mb-4">
@@ -353,10 +408,10 @@ const AnnouncementPanel = () => {
                 <img
                   src={selectedAnnouncement.imageUrl}
                   alt={selectedAnnouncement.title}
-                  className="w-full h-full object-contain"
+                  className="w-full h-auto object-contain rounded-lg"
                 />
               </figure>
-              <p className="text-base whitespace-pre-wrap break-words">
+              <p className="text-sm sm:text-base whitespace-pre-wrap break-words">
                 {selectedAnnouncement.content}
               </p>
               <div className="modal-action">

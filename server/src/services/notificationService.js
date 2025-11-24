@@ -205,3 +205,28 @@ export const notifyProjectDeleted = async (userId, projectId, reason) => {
     console.error("Error notifying project deleted:", error);
   }
 };
+
+/**
+ * Notify user they've been selected as Featured Artist
+ */
+export const notifyFeaturedArtist = async (userId, weekStart, weekEnd) => {
+  try {
+    const startDate = new Date(weekStart).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const endDate = new Date(weekEnd).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    return await createNotificationController({
+      recipient: userId,
+      type: "featured_artist",
+      message: `Congratulations! You've been selected as Featured Artist of the Week (${startDate} - ${endDate})!`,
+    });
+  } catch (error) {
+    console.error("Error notifying featured artist:", error);
+  }
+};

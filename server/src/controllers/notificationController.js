@@ -131,6 +131,7 @@ export const createNotification = async ({
       "project_reported",
       "project_restored",
       "project_deleted",
+      "featured_artist",
     ];
 
     if (

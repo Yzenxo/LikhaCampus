@@ -36,12 +36,19 @@ const NotificationSchema = new mongoose.Schema(
         "project_reported",
         "project_restored",
         "project_deleted",
+        "featured_artist",
       ],
       required: true,
     },
     targetType: {
       type: String,
-      enum: ["ForumPost", "Project", "Comment", "Announcement"],
+      enum: [
+        "ForumPost",
+        "Project",
+        "Comment",
+        "Announcement",
+        "Featured Artist",
+      ],
       required: false,
     },
     targetId: {

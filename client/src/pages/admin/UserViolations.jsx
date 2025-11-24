@@ -6,6 +6,8 @@ import { useAlert } from "../../hooks/useAlert";
 
 const UserViolations = () => {
   const { showAlert } = useAlert();
+  const tabs = ["Pending Reports", "Warnings", "Suspended", "Banned"];
+  const [activeTab, setActiveTab] = useState(tabs[0]);
   const [reportedUsers, setReportedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
@@ -13,9 +15,13 @@ const UserViolations = () => {
   const [selectedAction, setSelectedAction] = useState("");
   const [actionReason, setActionReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [suspensionDuration, setSuspensionDuration] = useState(24);
+  const [timer, setTimer] = useState(0); // triggers re-render for countdown
 
   useEffect(() => {
     fetchReportedUsers();
+    const interval = setInterval(() => setTimer((t) => t + 1), 60000); // re-render every minute
+    return () => clearInterval(interval);
   }, []);
 
   const fetchReportedUsers = async () => {
@@ -24,11 +30,10 @@ const UserViolations = () => {
       const response = await axios.get("/admin/reported-users", {
         withCredentials: true,
       });
-
       setReportedUsers(response.data.users || []);
     } catch (error) {
-      console.error("Error fetching reported users:", error);
-      showAlert("Failed to load reported users", "error");
+      console.error("Error fetching violation users:", error);
+      showAlert("Failed to load violation users", "error");
     } finally {
       setLoading(false);
     }
@@ -42,11 +47,10 @@ const UserViolations = () => {
         {},
         { withCredentials: true }
       );
-
       showAlert("Reports dismissed successfully", "success");
-      setReportedUsers(reportedUsers.filter((u) => u._id !== userId));
+      fetchReportedUsers();
     } catch (error) {
-      console.error("Error dismissing reports:", error);
+      console.error(error);
       showAlert(
         error.response?.data?.error || "Failed to dismiss reports",
         "error"
@@ -57,13 +61,8 @@ const UserViolations = () => {
   };
 
   const handleTakeAction = async () => {
-    if (!actionModal || !selectedAction) {
-      showAlert("Please select an action", "warning");
-      return;
-    }
-
-    if (!actionReason.trim()) {
-      showAlert("Please provide a reason", "warning");
+    if (!actionModal || !selectedAction || !actionReason.trim()) {
+      showAlert("Please select an action and provide a reason", "warning");
       return;
     }
 
@@ -74,17 +73,20 @@ const UserViolations = () => {
         {
           action: selectedAction,
           reason: actionReason,
+          duration:
+            selectedAction === "suspend" ? suspensionDuration : undefined,
         },
         { withCredentials: true }
       );
 
       showAlert("Action taken successfully", "success");
-      setReportedUsers(reportedUsers.filter((u) => u._id !== actionModal));
+      fetchReportedUsers();
       setActionModal(null);
       setSelectedAction("");
       setActionReason("");
+      setSuspensionDuration(24);
     } catch (error) {
-      console.error("Error taking action:", error);
+      console.error(error);
       showAlert(
         error.response?.data?.error || "Failed to take action",
         "error"
@@ -94,13 +96,65 @@ const UserViolations = () => {
     }
   };
 
+  // Returns remaining time for suspension or temporary ban
+  const getRemainingTime = (user, type = "suspension") => {
+    const dateKey = type === "suspension" ? "suspensionDate" : "banDate";
+    const durationKey =
+      type === "suspension" ? "suspensionDuration" : "banDuration";
+
+    if (!user[dateKey] || !user[durationKey]) return null;
+    const now = new Date();
+    const end = new Date(user[dateKey]);
+    end.setHours(end.getHours() + user[durationKey]);
+
+    const remainingMs = end - now;
+    if (remainingMs <= 0) return 0;
+
+    const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+    const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+    return { hours, minutes };
+  };
+
+  const handleUnSuspend = async (userId) => {
+    try {
+      setActionLoading(userId);
+      await axios.patch(`/admin/users/${userId}/un-suspend`, {
+        withCredentials: true,
+      });
+      showAlert("User has been un-suspended", "success");
+      fetchReportedUsers();
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to un-suspend user", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const filteredUsers = reportedUsers.filter((user) => {
+    switch (activeTab) {
+      case "Pending Reports":
+        return user.reports?.some((r) => r.status === "pending");
+      case "Warnings":
+        return user.warnings?.length > 0;
+      case "Suspended":
+        return user.isSuspended;
+      case "Banned":
+        return user.isBanned;
+      default:
+        return false;
+    }
+  });
+
   const renderUser = (user) => {
     const isLoading = actionLoading === user._id;
-    const pendingReports = user.reports.filter((r) => r.status === "pending");
+    const pendingReports =
+      user.reports?.filter((r) => r.status === "pending") || [];
+    const suspensionRemaining = getRemainingTime(user, "suspension");
+    const banRemaining = getRemainingTime(user, "ban");
 
     return (
       <div key={user._id} className="card bg-base-100 shadow-md p-4 mb-4">
-        {/* HEADER */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex items-center gap-3">
             <img
@@ -116,14 +170,13 @@ const UserViolations = () => {
               <p className="text-xs text-gray-400">{user.email}</p>
             </div>
           </div>
-
-          {/* STATUS BADGE */}
-          <div className="badge badge-error badge-lg">
-            {pendingReports.length} Reports
-          </div>
+          {activeTab === "Pending Reports" && (
+            <div className="badge badge-error badge-lg">
+              {pendingReports.length} Reports
+            </div>
+          )}
         </div>
 
-        {/* USER INFO */}
         <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
           <div>
             <span className="font-semibold">Student #:</span>{" "}
@@ -134,225 +187,174 @@ const UserViolations = () => {
           </div>
         </div>
 
-        {/* REPORTS LIST */}
-        <div className="card bg-base-200 p-3 rounded-lg mb-3">
-          <p className="font-semibold text-sm mb-3">Pending Reports:</p>
-
-          {pendingReports.map((report, idx) => (
-            <div
-              key={idx}
-              className="bg-base-100 p-3 rounded-lg mb-2 border border-base-300"
-            >
-              {/* REPORTER INFO */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="badge badge-sm badge-ghost">
-                  Report #{idx + 1}
-                </span>
-                <span className="text-xs text-gray-500">
-                  by {report.reportedBy?.firstName}{" "}
-                  {report.reportedBy?.lastName} (@
-                  {report.reportedBy?.username})
-                </span>
-              </div>
-
-              {/* REASON */}
-              <div className="mb-2">
-                <span className="font-semibold text-xs text-gray-600">
-                  Reason:
-                </span>
-                <p className="text-sm text-gray-800">{report.reason}</p>
-              </div>
-
-              {/* DETAILS */}
-              {report.details && (
-                <div className="mb-2">
-                  <span className="font-semibold text-xs text-gray-600">
-                    Details:
+        {activeTab === "Pending Reports" && pendingReports.length > 0 && (
+          <div className="card bg-base-200 p-3 rounded-lg mb-3">
+            <p className="font-semibold text-sm mb-3">Pending Reports:</p>
+            {pendingReports.map((report, idx) => (
+              <div
+                key={idx}
+                className="bg-base-100 p-3 rounded-lg mb-2 border border-base-300"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="badge badge-sm badge-ghost">
+                    Report #{idx + 1}
                   </span>
+                  <span className="text-xs text-gray-500">
+                    by {report.reportedBy?.firstName}{" "}
+                    {report.reportedBy?.lastName} (@
+                    {report.reportedBy?.username})
+                  </span>
+                </div>
+                <p className="text-sm text-gray-800">
+                  <strong>Reason:</strong> {report.reason}
+                </p>
+                {report.details && (
                   <p className="text-sm text-gray-700 italic whitespace-pre-wrap">
                     "{report.details}"
                   </p>
-                </div>
-              )}
-
-              {/* DATE */}
-              <div className="text-xs text-gray-400">
-                {new Date(report.reportedAt).toLocaleString()}
+                )}
+                <p className="text-xs text-gray-400">
+                  {new Date(report.reportedAt).toLocaleString()}
+                </p>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* ACTIONS */}
-        <div className="flex gap-2">
-          <button
-            className="btn btn-outline btn-sm flex-1"
-            onClick={() => handleDismissReports(user._id)}
-            disabled={isLoading}
-          >
-            {isLoading ? "..." : "Dismiss Reports"}
-          </button>
-          <button
-            className="btn btn-error btn-sm flex-1"
-            onClick={() => setActionModal(user._id)}
-            disabled={isLoading}
-          >
-            Take Action
-          </button>
-        </div>
+        {(activeTab === "Suspended" || activeTab === "Banned") && (
+          <div className="mb-2">
+            {activeTab === "Suspended" && (
+              <>
+                <p>
+                  <strong>Suspension Reason:</strong> {user.suspensionReason}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Suspended on {new Date(user.suspensionDate).toLocaleString()}
+                </p>
+                {suspensionRemaining ? (
+                  <p className="text-xs text-gray-500">
+                    Remaining: {suspensionRemaining.hours}h{" "}
+                    {suspensionRemaining.minutes}m
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500">Suspension ended</p>
+                )}
+                <button
+                  className="btn btn-primary mt-2"
+                  onClick={() => handleUnSuspend(user._id)}
+                >
+                  Un-suspend
+                </button>
+              </>
+            )}
+            {activeTab === "Banned" && (
+              <>
+                <p>
+                  <strong>Ban Reason:</strong> {user.banReason}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Banned on {new Date(user.banDate).toLocaleString()}
+                </p>
+                {banRemaining && (
+                  <p className="text-xs text-gray-500">
+                    Remaining: {banRemaining.hours}h {banRemaining.minutes}m
+                  </p>
+                )}
+                {!banRemaining && (
+                  <p className="text-xs text-gray-500">
+                    {user.banDuration ? "Ban ended" : "Permanent ban"}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === "Pending Reports" && (
+          <div className="flex gap-2">
+            <button
+              className="btn btn-outline btn-sm flex-1"
+              onClick={() => handleDismissReports(user._id)}
+              disabled={isLoading}
+            >
+              {isLoading ? "..." : "Dismiss Reports"}
+            </button>
+            <button
+              className="btn btn-error btn-sm flex-1"
+              onClick={() => setActionModal(user._id)}
+              disabled={isLoading}
+            >
+              Take Action
+            </button>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <>
-      <div className="container mx-auto p-3 space-y-6">
-        {/* HEADER */}
-        <div className="mb-6">
-          <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
-            <AlertTriangle size={24} /> User Reports
-          </h2>
-          <p className="text-gray-600">
-            Review users with 3 or more pending reports
-          </p>
-        </div>
-
-        {/* STATS */}
-        <div className="stats bg-white shadow mb-6">
-          <div className="stat">
-            <div className="stat-title">Users Flagged for Review</div>
-            <div className="stat-value text-error">{reportedUsers.length}</div>
-          </div>
-        </div>
-
-        {/* LOADING STATE */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <span className="loading loading-spinner loading-lg"></span>
-          </div>
-        ) : (
-          <>
-            {/* USERS LIST */}
-            {reportedUsers.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No users flagged for review</p>
-              </div>
-            ) : (
-              reportedUsers.map((user) => renderUser(user))
-            )}
-          </>
-        )}
+    <div className="container mx-auto p-3 space-y-6">
+      <div className="mb-6">
+        <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
+          <AlertTriangle size={24} /> User Violations
+        </h2>
       </div>
 
-      {/* ACTION MODAL */}
-      {actionModal && (
-        <dialog open className="modal modal-open">
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-lg text-error mb-4">
-              Take Action Against User
-            </h3>
+      <div className="tabs mb-4">
+        {tabs.map((tab) => {
+          const count = reportedUsers.filter((user) => {
+            switch (tab) {
+              case "Pending Reports":
+                return user.reports?.some((r) => r.status === "pending");
+              case "Warnings":
+                return user.warnings?.length > 0;
+              case "Suspended":
+                return user.isSuspended;
+              case "Banned":
+                return user.isBanned;
+            }
+          }).length;
+          return (
+            <button
+              key={tab}
+              className={`tab ${activeTab === tab ? "tab-active" : ""}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab} ({count})
+            </button>
+          );
+        })}
+      </div>
 
-            <div className="space-y-4">
-              {/* ACTION SELECT */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">
-                    Select Action *
-                  </span>
-                </label>
-                <select
-                  className="select select-bordered w-full"
-                  value={selectedAction}
-                  onChange={(e) => setSelectedAction(e.target.value)}
-                >
-                  <option value="">Choose an action...</option>
-                  <option value="warning">Issue Warning Only</option>
-                  <option value="suspend">Suspend Account (Temporary)</option>
-                  <option value="ban">Permanent Ban</option>
-                </select>
-              </div>
-
-              {/* REASON */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Reason *</span>
-                </label>
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  rows="3"
-                  placeholder="Explain why you're taking this action..."
-                  value={actionReason}
-                  onChange={(e) => setActionReason(e.target.value)}
-                  maxLength={500}
-                />
-                <label className="label">
-                  <span className="label-text-alt text-gray-500">
-                    {actionReason.length}/500 characters
-                  </span>
-                </label>
-              </div>
-
-              {/* ACTION DESCRIPTIONS */}
-              {selectedAction && (
-                <div className="alert alert-warning">
-                  <div className="text-sm">
-                    {selectedAction === "warning" && (
-                      <p>
-                        <strong>Warning:</strong> User will receive a warning
-                        email. Reports will be marked as reviewed.
-                      </p>
-                    )}
-                    {selectedAction === "suspend" && (
-                      <p>
-                        <strong>Suspension:</strong> User account will be
-                        temporarily suspended. They cannot log in until
-                        reactivated by admin.
-                      </p>
-                    )}
-                    {selectedAction === "ban" && (
-                      <p>
-                        <strong>Permanent Ban:</strong> User account will be
-                        permanently banned. This action cannot be undone easily.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="modal-action">
-              <button
-                className="btn"
-                onClick={() => {
-                  setActionModal(null);
-                  setSelectedAction("");
-                  setActionReason("");
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-error"
-                onClick={handleTakeAction}
-                disabled={
-                  !selectedAction || !actionReason.trim() || isProcessing
-                }
-              >
-                {isProcessing ? "Processing..." : "Confirm Action"}
-              </button>
-            </div>
-          </div>
-          <div
-            className="modal-backdrop"
-            onClick={() => {
-              setActionModal(null);
-              setSelectedAction("");
-              setActionReason("");
-            }}
-          ></div>
-        </dialog>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : filteredUsers.length === 0 ? (
+        <p className="text-gray-500 text-center py-12">
+          No users in "{activeTab}"
+        </p>
+      ) : (
+        filteredUsers.map((user) => renderUser(user))
       )}
-    </>
+
+      {selectedAction === "suspend" && (
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text font-semibold">
+              Suspension Duration (hours)
+            </span>
+          </label>
+          <input
+            type="number"
+            min={1}
+            className="input input-bordered w-full"
+            value={suspensionDuration}
+            onChange={(e) => setSuspensionDuration(Number(e.target.value))}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 

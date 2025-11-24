@@ -322,21 +322,18 @@ export const updateUserRole = async (req, res) => {
 export const getReportedUsers = async (req, res) => {
   try {
     const users = await User.find({
-      "reports.status": "pending",
-    })
-      .populate("reports.reportedBy", "firstName lastName username")
-      .select("-password")
-      .lean();
+      $or: [
+        { "reports.status": "pending" },
+        { warnings: { $exists: true, $not: { $size: 0 } } },
+        { isSuspended: true },
+        { isBanned: true },
+      ],
+    }).populate("reports.reportedBy", "firstName lastName username");
 
-    const flaggedUsers = users.filter((user) => {
-      const pendingReports = user.reports.filter((r) => r.status === "pending");
-      return pendingReports.length >= 3;
-    });
-
-    res.json({ users: flaggedUsers });
+    res.json({ users });
   } catch (error) {
-    console.error("Error fetching reported users:", error);
-    res.status(500).json({ error: "Server error", message: error.message });
+    console.error("Error fetching violation users:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -390,20 +387,29 @@ export const takeActionOnUser = async (req, res) => {
 
     switch (action) {
       case "warning":
-        console.log(`Warning issued to ${user.username}: ${reason}`);
+        console.log(`⚠️ Warning issued to ${user.username}: ${reason}`);
+        user.warnings = user.warnings || [];
+        user.warnings.push({
+          reason,
+          date: new Date(),
+          admin: req.session.userId,
+        });
         break;
 
       case "suspend":
-        user.isDeactivated = true;
-        user.deactivatedAt = new Date();
-        console.log(`Account suspended: ${user.username}`);
+        const durationHours = req.body.duration || 24;
+        user.isSuspended = true;
+        user.suspensionReason = reason;
+        user.suspensionDate = new Date();
+        user.suspensionDuration = durationHours;
+        console.log(`⏸️ Account suspended: ${user.username}`);
         break;
 
       case "ban":
-        user.isDeactivated = true;
-        user.deactivatedAt = new Date();
-
-        console.log(`Account permanently banned: ${user.username}`);
+        user.isBanned = true;
+        user.banReason = reason;
+        user.banDate = new Date();
+        console.log(`⛔ Account permanently banned: ${user.username}`);
         break;
 
       default:
@@ -416,9 +422,31 @@ export const takeActionOnUser = async (req, res) => {
       message: `Action '${action}' taken successfully`,
       action,
       reason,
+      userStatus: {
+        isSuspended: user.isSuspended || false,
+        isBanned: user.isBanned || false,
+      },
     });
   } catch (error) {
     console.error("Error taking action:", error);
     res.status(500).json({ error: "Server error", message: error.message });
+  }
+};
+
+export const unsuspendUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.isSuspended = false;
+    user.suspensionReason = "";
+    user.suspensionDate = null;
+    user.suspensionDuration = null;
+
+    await user.save();
+    res.json({ message: "User has been un-suspended" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to un-suspend user" });
   }
 };

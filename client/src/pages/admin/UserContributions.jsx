@@ -1,10 +1,8 @@
 import axios from "axios";
 import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 const UserContributions = () => {
-  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("projects");
@@ -88,23 +86,23 @@ const UserContributions = () => {
         </div>
 
         {/* STATS OVERVIEW */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="stat bg-base-100 shadow rounded-lg">
+        <div className="flex flex-wrap gap-4 mb-6">
+          <div className="stat bg-base-100 shadow rounded-lg flex-1 min-w-[230px]">
             <div className="stat-title">Total Users</div>
             <div className="stat-value text-primary">{users.length}</div>
             <div className="stat-desc">{activeUsers} active</div>
           </div>
-          <div className="stat bg-base-100 shadow rounded-lg">
+          <div className="stat bg-base-100 shadow rounded-lg flex-1 min-w-[230px]">
             <div className="stat-title">Total Projects</div>
             <div className="stat-value text-secondary">{totalProjects}</div>
             <div className="stat-desc">All time</div>
           </div>
-          <div className="stat bg-base-100 shadow rounded-lg">
+          <div className="stat bg-base-100 shadow rounded-lg flex-1 min-w-[230px]">
             <div className="stat-title">Total Forum Posts</div>
             <div className="stat-value text-accent">{totalPosts}</div>
             <div className="stat-desc">All time</div>
           </div>
-          <div className="stat bg-base-100 shadow rounded-lg">
+          <div className="stat bg-base-100 shadow rounded-lg flex-1 min-w-[230px]">
             <div className="stat-title">Avg per User</div>
             <div className="stat-value text-info">
               {users.length > 0 ? Math.round(totalProjects / users.length) : 0}

@@ -13,6 +13,7 @@ import {
   UserPen,
   UserRoundX,
   Users,
+  X,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -21,6 +22,7 @@ import { useAlert } from "../../hooks/useAlert";
 const AdminNavbar = () => {
   const { showAlert } = useAlert();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const menuItems = [
@@ -105,57 +107,97 @@ const AdminNavbar = () => {
     }
   };
 
+  const handleNavClick = (e, item) => {
+    handleLogout(e, item);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <>
       <div className="flex h-screen bg-gray-100">
+        {/* MOBILE OVERLAY */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          ></div>
+        )}
+
         {/* SIDEBAR */}
         <aside
-          className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${
-            collapsed ? "w-20" : "w-64"
-          }`}
+          className={`
+            fixed lg:static inset-y-0 left-0 z-50
+            bg-white border-r border-gray-200 flex flex-col
+            transition-all duration-300
+            ${collapsed ? "lg:w-20" : "lg:w-64"}
+            ${mobileMenuOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"}
+          `}
         >
+          {/* SIDEBAR HEADER */}
           <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
             {!collapsed && (
               <span className="font-bold text-lg">LikhaCampus</span>
             )}
+
+            {/* Desktop collapse button */}
             <button
-              className="btn btn-ghost btn-sm"
+              className="hidden lg:block btn btn-ghost btn-sm"
               onClick={() => setCollapsed(!collapsed)}
             >
               <Menu size={20} />
             </button>
+
+            {/* Mobile close button */}
+            <button
+              className="lg:hidden btn btn-ghost btn-sm"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <X size={20} />
+            </button>
           </div>
 
-          <nav className="flex-1 px-2 mt-4 flex flex-col gap-2">
+          {/* NAVIGATION */}
+          <nav className="flex-1 px-2 mt-4 flex flex-col gap-2 overflow-y-auto">
             {menuItems.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.path}
-                onClick={(e) => handleLogout(e, item)}
+                onClick={(e) => handleNavClick(e, item)}
                 className={({ isActive }) =>
                   `flex items-center gap-2 p-2 rounded hover:bg-gray-100 transition-colors ${
-                    collapsed ? "justify-center" : ""
+                    collapsed ? "lg:justify-center" : ""
                   } ${isActive && item.path !== "#logout" ? "bg-gray-200" : ""}`
                 }
               >
                 {item.icon}
-                {!collapsed && <span>{item.name}</span>}
+                <span className={collapsed ? "lg:hidden" : ""}>
+                  {item.name}
+                </span>
               </NavLink>
             ))}
           </nav>
         </aside>
 
         {/* MAIN CONTENT */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col w-full lg:w-auto">
           {/* TOPBAR */}
           <header className="flex items-center justify-between bg-white border-b border-gray-200 h-16 px-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="font-bold text-lg">Admin Dashboard</span>
+              {/* Mobile menu button */}
+              <button
+                className="lg:hidden btn btn-ghost btn-sm"
+                onClick={() => setMobileMenuOpen(true)}
+              >
+                <Menu size={20} />
+              </button>
+              <span className="font-bold text-base sm:text-lg">
+                Admin Dashboard
+              </span>
             </div>
           </header>
 
           {/* CONTENT AREA */}
-          <main className="flex-1 p-5 overflow-y-auto bg-gradient-to-br from-blue-50 to-purple-50">
+          <main className="flex-1 p-3 sm:p-5 overflow-y-auto bg-gradient-to-br from-blue-50 to-purple-50">
             <Outlet />
           </main>
         </div>

@@ -2,6 +2,7 @@ import { createNotification } from "../controllers/notificationController.js";
 import FeaturedArtist from "../models/FeaturedArtist.js";
 import Project from "../models/Project.js";
 import User from "../models/User.js";
+import { notifyFeaturedArtist } from "../services/notificationService.js";
 
 /**
  * Get the start and end date for the current week (Monday to Sunday)
@@ -155,15 +156,8 @@ export const selectFeaturedArtist = async () => {
       return null;
     }
 
-    // Create featured artist record
-    const featuredArtist = new FeaturedArtist({
-      user: selectedUser,
-      week,
-      year,
-      startDate,
-      endDate,
-      projectCount,
-    });
+    // Send notification to the featured artist
+    await notifyFeaturedArtist(selectedUser, startDate, endDate);
 
     await featuredArtist.save();
 

@@ -77,114 +77,116 @@ const FeaturedArtist = () => {
   return (
     <>
       {/* SECTION HEADER */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-yellow-400 text-[#00017a] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold text-xs">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            Featured Artist
-          </div>
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#00017a]">
-            This Week's Spotlight
-          </h2>
-        </div>
-      </div>
-
-      {/* COMPACT FEATURED CARD */}
-      <div className="relative bg-gradient-to-br from-[#00017a] via-[#000050] to-[#00017a] rounded-lg sm:rounded-xl overflow-hidden shadow-xl">
-        {/* BACKGROUND PATTERN */}
-        <div className="absolute inset-0 opacity-5">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          ></div>
-        </div>
-
-        <div className="relative flex flex-col sm:grid sm:grid-cols-5">
-          {/* LEFT - Avatar */}
-          <div
-            className="relative sm:col-span-2 h-48 sm:h-64 md:h-80 overflow-hidden group cursor-pointer"
-            onClick={() => navigate(`/profile/${user.username}`)}
-          >
-            <img
-              src={user.avatar?.url || defaultAvatar}
-              alt={`${user.firstName} ${user.lastName}`}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
-          </div>
-
-          {/* RIGHT - Info */}
-          <div className="sm:col-span-3 p-4 sm:p-5 md:p-6 flex flex-col justify-center text-white relative">
-            <div className="mb-3 sm:mb-4">
-              <button
-                onClick={() => navigate(`/profile/${user.username}`)}
-                className="text-lg sm:text-xl md:text-2xl font-bold mb-1 hover:text-yellow-400 transition-colors text-left"
+      <div id="featured-artist">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-yellow-400 text-[#00017a] px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold text-xs">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
-                {user.firstName} {user.lastName}
-              </button>
-              <p className="text-gray-300 text-xs sm:text-sm">
-                @{user.username}
-              </p>
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Featured Artist
+            </div>
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#00017a]">
+              This Week's Spotlight
+            </h2>
+          </div>
+        </div>
+
+        {/* COMPACT FEATURED CARD */}
+        <div className="relative bg-gradient-to-br from-[#00017a] via-[#000050] to-[#00017a] rounded-lg sm:rounded-xl overflow-hidden shadow-xl">
+          {/* BACKGROUND PATTERN */}
+          <div className="absolute inset-0 opacity-5">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              }}
+            ></div>
+          </div>
+
+          <div className="relative flex flex-col sm:grid sm:grid-cols-5">
+            {/* LEFT - Avatar */}
+            <div
+              className="relative sm:col-span-2 h-48 sm:h-64 md:h-80 overflow-hidden group cursor-pointer"
+              onClick={() => navigate(`/profile/${user.username}`)}
+            >
+              <img
+                src={user.avatar?.url || defaultAvatar}
+                alt={`${user.firstName} ${user.lastName}`}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
             </div>
 
-            {/* BIO */}
-            {user.bio && (
-              <p className="text-gray-200 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
-                {user.bio}
-              </p>
-            )}
+            {/* RIGHT - Info */}
+            <div className="sm:col-span-3 p-4 sm:p-5 md:p-6 flex flex-col justify-center text-white relative">
+              <div className="mb-3 sm:mb-4">
+                <button
+                  onClick={() => navigate(`/profile/${user.username}`)}
+                  className="text-lg sm:text-xl md:text-2xl font-bold mb-1 hover:text-yellow-400 transition-colors text-left"
+                >
+                  {user.firstName} {user.lastName}
+                </button>
+                <p className="text-gray-300 text-xs sm:text-sm">
+                  @{user.username}
+                </p>
+              </div>
 
-            {/* STATS INLINE */}
-            <div className="flex gap-3 sm:gap-4 mb-3 sm:mb-4">
-              <div className="flex items-center gap-2">
-                <div className="bg-yellow-400 text-[#00017a] rounded-lg px-2.5 sm:px-3 py-1">
-                  <span className="font-bold text-base sm:text-lg">
-                    {projectCount}
+              {/* BIO */}
+              {user.bio && (
+                <p className="text-gray-200 text-xs sm:text-sm leading-relaxed mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-3">
+                  {user.bio}
+                </p>
+              )}
+
+              {/* STATS INLINE */}
+              <div className="flex gap-3 sm:gap-4 mb-3 sm:mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="bg-yellow-400 text-[#00017a] rounded-lg px-2.5 sm:px-3 py-1">
+                    <span className="font-bold text-base sm:text-lg">
+                      {projectCount}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-300">
+                    {projectCount === 1 ? "Project" : "Projects"}
                   </span>
                 </div>
-                <span className="text-xs text-gray-300">
-                  {projectCount === 1 ? "Project" : "Projects"}
-                </span>
               </div>
-            </div>
 
-            {/* CTA */}
-            <div className="flex flex-col xs:flex-row gap-2">
-              <button
-                onClick={() => navigate(`/profile/${user.username}`)}
-                className="btn btn-warning btn-sm text-[#00017a] font-semibold flex-1 xs:flex-initial"
-              >
-                View Portfolio
-              </button>
-              <button
-                onClick={() => navigate(`/projects`)}
-                className="btn btn-outline btn-warning btn-sm hover:bg-yellow-400 hover:text-[#00017a] flex-1 xs:flex-initial"
-              >
-                Projects
-              </button>
+              {/* CTA */}
+              <div className="flex flex-col xs:flex-row gap-2">
+                <button
+                  onClick={() => navigate(`/profile/${user.username}`)}
+                  className="btn btn-warning btn-sm text-[#00017a] font-semibold flex-1 xs:flex-initial"
+                >
+                  View Portfolio
+                </button>
+                <button
+                  onClick={() => navigate(`/projects`)}
+                  className="btn btn-outline btn-warning btn-sm hover:bg-yellow-400 hover:text-[#00017a] flex-1 xs:flex-initial"
+                >
+                  Projects
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* BOTTOM TIP */}
-      <div className="mt-3 bg-yellow-400/10 border-l-4 border-yellow-400 rounded-lg p-2.5 sm:p-3">
-        <p className="text-xs text-gray-700">
-          <span className="font-semibold text-[#00017a]">
-            Want to be featured?
-          </span>{" "}
-          Keep creating and engaging! Artists are selected weekly based on
-          contributions.
-        </p>
+        {/* BOTTOM TIP */}
+        <div className="mt-3 bg-yellow-400/10 border-l-4 border-yellow-400 rounded-lg p-2.5 sm:p-3">
+          <p className="text-xs text-gray-700">
+            <span className="font-semibold text-[#00017a]">
+              Want to be featured?
+            </span>{" "}
+            Keep creating and engaging! Artists are selected weekly based on
+            contributions.
+          </p>
+        </div>
       </div>
     </>
   );

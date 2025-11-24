@@ -112,7 +112,7 @@ const ProjectManagementPanel = () => {
           </p>
         </div>
 
-        {/* Search and Filter */}
+        {/* SEARCH AND FILTER */}
         <div className="flex flex-col gap-4">
           <input
             type="text"
@@ -122,7 +122,7 @@ const ProjectManagementPanel = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
 
-          {/* Skill Dropdown Filter */}
+          {/* SKILL FILTER */}
           <div className="card bg-base-100 shadow">
             <div className="card-body p-4">
               <div className="flex items-center justify-between mb-2">
@@ -139,7 +139,7 @@ const ProjectManagementPanel = () => {
               </div>
 
               <div className="w-full flex flex-col md:flex-row gap-3">
-                {/* Skill Select */}
+                {/* SKILL SELECT */}
                 <select
                   className="select select-primary"
                   value={filterSkill}
@@ -163,7 +163,7 @@ const ProjectManagementPanel = () => {
                     ))}
                 </select>
 
-                {/* Category Select */}
+                {/* CATEGORY SELECT */}
                 {filterSkill && skillsAndCategories[filterSkill] && (
                   <select
                     className="select select-secondary"
@@ -181,12 +181,14 @@ const ProjectManagementPanel = () => {
               </div>
 
               {(filterSkill || filterCategory) && (
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   {filterSkill && (
-                    <span className="badge badge-primary">{filterSkill}</span>
+                    <span className="badge badge-primary whitespace-nowrap max-w-max inline-flex items-center px-3">
+                      {filterSkill}
+                    </span>
                   )}
                   {filterCategory && (
-                    <span className="badge badge-secondary">
+                    <span className="badge badge-secondary whitespace-nowrap max-w-max inline-flex items-center px-3">
                       {filterCategory}
                     </span>
                   )}
@@ -202,7 +204,7 @@ const ProjectManagementPanel = () => {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* STATS */}
         <div className="stats bg-white shadow w-full">
           <div className="stat">
             <div className="stat-title">Total Projects</div>
@@ -216,7 +218,7 @@ const ProjectManagementPanel = () => {
           </div>
         </div>
 
-        {/* Projects Table */}
+        {/* PROJECTS TABLE */}
         <div className="card bg-base-100 shadow-md overflow-x-auto">
           <table className="table w-full">
             <thead>
@@ -257,11 +259,13 @@ const ProjectManagementPanel = () => {
                         )}
                       </div>
                     </td>
+
                     <td className="font-medium">
                       <div className="max-w-xs truncate" title={project.title}>
                         {project.title}
                       </div>
                     </td>
+
                     <td>
                       <div className="flex items-center gap-2">
                         <div className="avatar">
@@ -286,17 +290,21 @@ const ProjectManagementPanel = () => {
                         </div>
                       </div>
                     </td>
+
                     <td>
-                      <span className="badge badge-sm badge-primary">
+                      <span className="badge badge-sm badge-primary whitespace-nowrap max-w-max inline-flex items-center px-3">
                         {project.skill}
                       </span>
                     </td>
+
                     <td>
-                      <span className="badge badge-sm badge-secondary">
+                      <span className="badge badge-sm badge-secondary whitespace-nowrap max-w-max inline-flex items-center px-3">
                         {project.category}
                       </span>
                     </td>
+
                     <td>{new Date(project.createdAt).toLocaleDateString()}</td>
+
                     <td>
                       <button
                         className="btn btn-sm btn-ghost gap-2"
@@ -324,6 +332,7 @@ const ProjectManagementPanel = () => {
                 <h3 className="font-bold text-2xl break-words whitespace-pre-wrap">
                   {selectedProject.title}
                 </h3>
+
                 <div className="flex items-center gap-2 mt-2">
                   <div className="avatar">
                     <div className="w-10 h-10 rounded-full">
@@ -347,6 +356,7 @@ const ProjectManagementPanel = () => {
                   </div>
                 </div>
               </div>
+
               <button
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={closeQuickView}
@@ -357,13 +367,13 @@ const ProjectManagementPanel = () => {
 
             {/* BADGES */}
             <div className="flex flex-wrap gap-2 mb-4">
-              <span className="badge badge-primary whitespace-nowrap px-3">
+              <span className="badge badge-primary whitespace-nowrap max-w-max inline-flex items-center px-3">
                 {selectedProject.skill}
               </span>
-              <span className="badge badge-secondary whitespace-nowrap px-3">
+              <span className="badge badge-secondary whitespace-nowrap max-w-max inline-flex items-center px-3">
                 {selectedProject.category}
               </span>
-              <span className="badge badge-outline whitespace-nowrap px-3">
+              <span className="badge badge-outline whitespace-nowrap max-w-max inline-flex items-center px-3">
                 {new Date(selectedProject.createdAt).toLocaleDateString()}
               </span>
             </div>
@@ -372,17 +382,28 @@ const ProjectManagementPanel = () => {
             {selectedProject.images && selectedProject.images.length > 0 && (
               <div className="mb-4">
                 <h4 className="font-semibold mb-2">Images</h4>
-                <div className="carousel carousel-center w-full space-x-4 bg-base-200 rounded-box p-4">
+
+                <div className="flex gap-4 overflow-x-auto p-2 rounded-box bg-base-200">
                   {selectedProject.images.map((image, index) => (
-                    <div key={index} className="carousel-item">
+                    <div
+                      key={index}
+                      className="flex-shrink-0 w-auto max-w-full"
+                    >
                       <img
                         src={image.url}
                         alt={`Project image ${index + 1}`}
-                        className="max-h-96 rounded-box object-contain"
+                        className="h-72 md:h-96 object-contain rounded-box"
                       />
                     </div>
                   ))}
                 </div>
+
+                {/* Scroll hint */}
+                {selectedProject.images.length > 1 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Swipe / Scroll horizontally to view more images →
+                  </p>
+                )}
               </div>
             )}
 
@@ -420,7 +441,10 @@ const ProjectManagementPanel = () => {
                   <h4 className="font-semibold mb-2">Tagged Users</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedProject.taggedUsers.map((user) => (
-                      <div key={user._id} className="badge badge-lg gap-2 p-3">
+                      <div
+                        key={user._id}
+                        className="badge badge-lg gap-2 p-3 whitespace-nowrap max-w-max inline-flex items-center"
+                      >
                         <div className="avatar">
                           <div className="w-6 h-6 rounded-full">
                             <img
@@ -439,13 +463,14 @@ const ProjectManagementPanel = () => {
                 </div>
               )}
 
-            {/* Modal Actions */}
+            {/* MODAL ACTIONS */}
             <div className="modal-action">
               <button className="btn" onClick={closeQuickView}>
                 Close
               </button>
             </div>
           </div>
+
           <div className="modal-backdrop" onClick={closeQuickView}></div>
         </dialog>
       )}

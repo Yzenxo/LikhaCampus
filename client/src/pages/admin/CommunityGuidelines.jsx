@@ -232,7 +232,7 @@ const CommunityGuidelines = () => {
                   </label>
                   <textarea
                     name="content"
-                    className="textarea textarea-bordered w-full truncate"
+                    className="textarea textarea-bordered w-full resize-y"
                     rows="4"
                     placeholder="Detailed description of the guideline..."
                     value={formData.content}
@@ -330,7 +330,7 @@ const CommunityGuidelines = () => {
             guidelines.map((guideline) => (
               <div key={guideline._id} className="card bg-base-100 shadow-md">
                 <div className="card-body">
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="card-title text-xl">
                         {guideline.title}

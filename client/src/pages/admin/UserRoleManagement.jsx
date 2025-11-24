@@ -173,7 +173,7 @@ const UserRoleManagement = () => {
                     <td>{user.yearLevel}</td>
                     <td>
                       <select
-                        className={`select select-sm select-bordered ${
+                        className={`select select-sm select-bordered min-w-[110px] ${
                           user.role === "admin"
                             ? "select-secondary"
                             : "select-primary"

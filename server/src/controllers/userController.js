@@ -235,38 +235,31 @@ export const registerUser = async (req, res) => {
 };
 
 const MAX_LOGIN_ATTEMPTS = 5;
-const BASE_LOCK_TIME = 15 * 60 * 1000; // 15 minutes base time
+const BASE_LOCK_TIME = 15 * 60 * 1000; // 15 minutes base
 
-// ===== LOGIN ACCOUNT =====
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
+    if (!email || !password)
       return res.status(400).json({ message: "All fields are required." });
-    }
 
-    let userLean = await User.findOne({ email }).lean();
+    const user = await User.findOne({ email });
 
-    if (!userLean) {
+    if (!user) {
       return res.status(400).json({ message: "Invalid credentials." });
     }
 
+    // ===== FIX CORRUPTED OR EXPIRED LOCK =====
     if (
-      userLean.lockUntil &&
-      (userLean.lockUntil.toString() === "Invalid Date" ||
-        isNaN(new Date(userLean.lockUntil).getTime()))
+      user.lockUntil &&
+      (isNaN(new Date(user.lockUntil).getTime()) ||
+        user.lockUntil <= Date.now())
     ) {
-      console.log("Fixing corrupted lockUntil for user:", userLean.email);
-      await User.updateOne(
-        { _id: userLean._id },
-        {
-          $unset: { lockUntil: "" },
-          $set: { loginAttempts: 0, lockCount: 0 },
-        }
-      );
+      user.lockUntil = undefined;
+      user.loginAttempts = 0;
+      user.lockCount = 0;
+      await user.save({ validateBeforeSave: false });
     }
-
-    const user = await User.findOne({ email });
 
     if (user.lockUntil && user.lockUntil > Date.now()) {
       const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
@@ -275,18 +268,46 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    if (user.lockUntil && user.lockUntil <= Date.now()) {
-      user.loginAttempts = 0;
-      user.lockUntil = undefined;
-      await user.save({ validateBeforeSave: false }); // ADD THIS
+    if (user.isSuspended) {
+      return res
+        .status(403)
+        .json({ message: `Account suspended: ${user.suspensionReason}` });
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    if (user.isBanned) {
+      return res
+        .status(403)
+        .json({ message: `Account banned: ${user.banReason}` });
+    }
 
-    if (!match) {
+    if (user.isSuspended) {
+      const now = new Date();
+      const suspensionEnd = new Date(user.suspensionDate);
+      suspensionEnd.setHours(
+        suspensionEnd.getHours() + user.suspensionDuration
+      );
+
+      if (now >= suspensionEnd) {
+        // Lift suspension automatically
+        user.isSuspended = false;
+        user.suspensionReason = "";
+        user.suspensionDate = null;
+        user.suspensionDuration = 0;
+        await user.save();
+      } else {
+        throw new Error(
+          `Account temporarily suspended until ${suspensionEnd.toLocaleString()}`
+        );
+      }
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
       user.loginAttempts += 1;
 
       if (user.loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        // Exponential backoff
         const lockMultiplier = Math.min(Math.pow(2, user.lockCount || 0), 8);
         const newLockTime = BASE_LOCK_TIME * lockMultiplier;
         const finalLockTime = Math.min(newLockTime, 24 * 60 * 60 * 1000);
@@ -294,8 +315,7 @@ export const loginUser = async (req, res) => {
         user.lockUntil = new Date(Date.now() + finalLockTime);
         user.loginAttempts = 0;
         user.lockCount = (user.lockCount || 0) + 1;
-
-        await user.save({ validateBeforeSave: false }); // ADD THIS
+        await user.save({ validateBeforeSave: false });
 
         const minutes = Math.ceil(finalLockTime / 60000);
         return res.status(423).json({
@@ -303,7 +323,7 @@ export const loginUser = async (req, res) => {
         });
       }
 
-      await user.save({ validateBeforeSave: false }); // ADD THIS
+      await user.save({ validateBeforeSave: false });
 
       const attemptsLeft = MAX_LOGIN_ATTEMPTS - user.loginAttempts;
       return res.status(401).json({
@@ -311,43 +331,14 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    if (user.isEmailVerified === false && user.emailVerificationToken) {
-      return res.status(403).json({
-        message:
-          "Please verify your email before logging in. Check your inbox for the verification link.",
-        emailNotVerified: true,
-        email: user.email,
-      });
-    }
-
-    if (user.isDeactivated) {
-      const daysSinceDeactivation =
-        (Date.now() - user.deactivatedAt) / (1000 * 60 * 60 * 24);
-
-      if (daysSinceDeactivation > 15) {
-        return res.status(410).json({
-          message:
-            "Account has been permanently deleted and cannot be recovered.",
-        });
-      }
-
-      user.isDeactivated = false;
-      user.deactivatedAt = null;
-      user.loginAttempts = 0;
-      user.lockUntil = undefined;
-      user.lockCount = 0;
-      await user.save({ validateBeforeSave: false }); // ADD THIS
-
-      console.log(`Account reactivated: ${user.email}`);
-    }
-
+    // Reset attempts on successful login
     user.loginAttempts = 0;
     user.lockUntil = undefined;
     user.lockCount = 0;
-    await user.save({ validateBeforeSave: false }); // ADD THIS
+    await user.save({ validateBeforeSave: false });
 
     req.session.userId = user._id;
-    const userObj = {
+    req.session.user = {
       id: user._id,
       email: user.email,
       firstName: user.firstName,
@@ -358,17 +349,10 @@ export const loginUser = async (req, res) => {
       bio: user.bio,
     };
 
-    req.session.user = userObj;
-
     req.session.save((err) => {
-      if (err) {
-        return res.status(500).json({ error: "Session save failed." });
-      }
+      if (err) return res.status(500).json({ error: "Session save failed." });
 
-      res.json({
-        message: "Login successful!",
-        user: req.session.user,
-      });
+      res.json({ message: "Login successful!", user: req.session.user });
     });
   } catch (error) {
     console.error("Login error:", error);
