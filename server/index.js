@@ -19,7 +19,7 @@ import connect from "./src/config/db.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ FIXED: Simplified CORS configuration for production
+// FIXED: Simplified CORS configuration for production
 const allowedOrigins = [
   "https://likha-campus.vercel.app",
   "https://likha-campus-git-main-stellbiens-projects.vercel.app",
@@ -132,7 +132,7 @@ if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
-// ✅ FIXED: Session configuration for production
+// FIXED: Session configuration for production
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "fallback-secret-change-me",

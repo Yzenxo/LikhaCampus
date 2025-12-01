@@ -82,9 +82,22 @@ const Forum = () => {
       });
 
       setPosts(response.data.posts || []);
-      setPagination(response.data.pagination);
+      // FIX: Add fallback for pagination data
+      setPagination(
+        response.data.pagination || {
+          totalPages: 1,
+          totalPosts: 0,
+          hasMore: false,
+        }
+      );
     } catch (error) {
       console.error("Error fetching posts: ", error);
+      // FIX: Reset pagination on error
+      setPagination({
+        totalPages: 1,
+        totalPosts: 0,
+        hasMore: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -272,7 +285,8 @@ const Forum = () => {
           ))
         )}
 
-        {pagination.totalPages > 1 && (
+        {/* FIX: Add safety checks for pagination */}
+        {pagination && pagination.totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 mt-8 mb-6">
             <button
               className="btn btn-sm"

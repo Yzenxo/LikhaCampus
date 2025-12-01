@@ -86,7 +86,6 @@ export default function App() {
     axios
       .get("/user/me", { withCredentials: true })
       .then((response) => {
-        console.log("User authenticated.");
         setUser(response.data.user);
 
         if (response.data.user?.needsReVerification) {
