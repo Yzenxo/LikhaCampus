@@ -162,7 +162,6 @@ const UserNavbar = () => {
           {/* RIGHT */}
           <div className="navbar-end gap-5 pr-4">
             {isVisitor ? (
-              // Visitor view - show login/signup buttons
               <div className="flex gap-2">
                 <button
                   onClick={() => navigate("/login")}
@@ -178,7 +177,6 @@ const UserNavbar = () => {
                 </button>
               </div>
             ) : (
-              // Logged-in user view
               <>
                 {/* FOR NOTIFICATIONS */}
                 <NotificationDropdown />

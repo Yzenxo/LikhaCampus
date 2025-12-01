@@ -39,7 +39,9 @@ const FeaturedArtist = () => {
     return (
       <div className="card bg-gradient-to-br from-[#00017a] to-[#0002b3] shadow-lg p-4 sm:p-6">
         <div className="flex justify-center items-center py-8">
-          <span className="loading loading-spinner loading-md text-white"></span>
+          <span className="loading loading-spinner loading-md text-white">
+            Loading featured artist...
+          </span>
         </div>
       </div>
     );

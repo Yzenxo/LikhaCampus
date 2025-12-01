@@ -8,8 +8,91 @@ const NotificationDropdown = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const eventSourceRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const RECONNECT_DELAY = 3000;
+
+  // SSE Connection
+  const connectToSSE = () => {
+    try {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+
+      const eventSource = new EventSource("/api/notifications/stream", {
+        withCredentials: true,
+      });
+
+      eventSourceRef.current = eventSource;
+
+      eventSource.onopen = () => {
+        setIsConnected(true);
+        reconnectAttemptsRef.current = 0;
+      };
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          switch (data.type) {
+            case "connected":
+              console.log("SSE connection confirmed");
+              break;
+
+            case "notification":
+              setNotifications((prev) => [data.data, ...prev]);
+              setUnreadCount((prev) => prev + 1);
+
+              if (Notification.permission === "granted") {
+                new Notification("New Notification", {
+                  body: data.data.message || "You have a new notification",
+                  icon: "/logo.png",
+                });
+              }
+              break;
+
+            case "unread_count":
+              setUnreadCount(data.count);
+              break;
+
+            default:
+              console.log("Unknown message type:", data.type);
+          }
+        } catch (err) {
+          console.error("Error parsing SSE message:", err);
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error("SSE connection error:", err);
+        setIsConnected(false);
+        eventSource.close();
+
+        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttemptsRef.current += 1;
+          const delay = RECONNECT_DELAY * reconnectAttemptsRef.current;
+
+          console.log(
+            `Reconnecting in ${delay}ms (attempt ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`
+          );
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connectToSSE();
+          }, delay);
+        } else {
+          console.error("Max reconnection attempts reached");
+        }
+      };
+    } catch (err) {
+      console.error("Error creating EventSource:", err);
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -24,9 +107,26 @@ const NotificationDropdown = () => {
   };
 
   useEffect(() => {
+    // Connect to SSE
+    connectToSSE();
+
+    // Fetch initial notifications
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000);
-    return () => clearInterval(interval);
+
+    // Request browser notification permission
+    if (Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+
+    return () => {
+      if (eventSourceRef.current) {
+        console.log("📡 Closing notification stream");
+        eventSourceRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -83,8 +183,7 @@ const NotificationDropdown = () => {
   const getRedirectPath = (notification) => {
     switch (notification.type) {
       case "announcement":
-        const announcementPath = `/home#announcement-${notification.targetId}`;
-        return announcementPath;
+        return `/home#announcement-${notification.targetId}`;
 
       case "featured_artist":
         return "/home#featured-artist";
@@ -94,8 +193,7 @@ const NotificationDropdown = () => {
           notification.targetType === "Post" ||
           notification.targetType === "ForumPost"
         ) {
-          const upvotePath = `/forum#post-${notification.targetId}`;
-          return upvotePath;
+          return `/forum#post-${notification.targetId}`;
         }
         return "/forum";
 
@@ -139,9 +237,7 @@ const NotificationDropdown = () => {
     }
 
     const redirectPath = getRedirectPath(notification);
-
     setIsOpen(false);
-
     navigate(redirectPath);
   };
 
@@ -233,7 +329,6 @@ const NotificationDropdown = () => {
             </svg>
           </div>
         );
-
       case "project_restored":
         return (
           <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -253,7 +348,6 @@ const NotificationDropdown = () => {
             </svg>
           </div>
         );
-
       case "project_deleted":
         return (
           <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
@@ -305,6 +399,10 @@ const NotificationDropdown = () => {
               <span className="badge badge-xs bg-royal-blue text-white indicator-item">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
+            )}
+            {/* Connection status indicator */}
+            {!isConnected && (
+              <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-warning animate-pulse" />
             )}
           </div>
         </button>

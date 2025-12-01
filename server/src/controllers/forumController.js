@@ -62,16 +62,19 @@ export const createPost = async (req, res) => {
   }
 };
 
-// ===== GET POSTS (FILTER HIDDEN FOR NON-ADMINS) =====
+// ===== GET POSTS (WITH PAGINATION FOR INFINITE SCROLL) =====
 export const getPosts = async (req, res) => {
   try {
-    const { sortBy = "trending", page = 0, limit = 20 } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const { sortBy = "recent" } = req.query;
     const isAdmin = req.session.user?.role === "admin";
 
-    let sortQuery = {};
-    let posts;
-
     const moderationFilter = isAdmin ? {} : { "moderation.status": "active" };
+
+    let posts;
+    let sortQuery = {};
 
     switch (sortBy) {
       case "trending":
@@ -79,9 +82,6 @@ export const getPosts = async (req, res) => {
           { $match: moderationFilter },
           {
             $addFields: {
-              ageInHours: {
-                $divide: [{ $subtract: [new Date(), "$createdAt"] }, 3600000],
-              },
               trendingScore: {
                 $divide: [
                   {
@@ -106,8 +106,8 @@ export const getPosts = async (req, res) => {
             },
           },
           { $sort: { trendingScore: -1 } },
-          { $skip: parseInt(page) * parseInt(limit) },
-          { $limit: parseInt(limit) },
+          { $skip: skip },
+          { $limit: limit },
         ]);
 
         await ForumPost.populate(posts, {
@@ -121,8 +121,8 @@ export const getPosts = async (req, res) => {
         posts = await ForumPost.find(moderationFilter)
           .sort(sortQuery)
           .populate("author", "firstName lastName avatar username")
-          .skip(parseInt(page) * parseInt(limit))
-          .limit(parseInt(limit));
+          .skip(skip)
+          .limit(limit);
         break;
 
       case "comments":
@@ -130,32 +130,34 @@ export const getPosts = async (req, res) => {
         posts = await ForumPost.find(moderationFilter)
           .sort(sortQuery)
           .populate("author", "firstName lastName avatar username")
-          .skip(parseInt(page) * parseInt(limit))
-          .limit(parseInt(limit));
+          .skip(skip)
+          .limit(limit);
         break;
 
       case "newest":
-        sortQuery = { createdAt: -1 };
-        posts = await ForumPost.find(moderationFilter)
-          .sort(sortQuery)
-          .populate("author", "firstName lastName avatar username")
-          .skip(parseInt(page) * parseInt(limit))
-          .limit(parseInt(limit));
-        break;
-
       default:
         sortQuery = { createdAt: -1 };
         posts = await ForumPost.find(moderationFilter)
           .sort(sortQuery)
           .populate("author", "firstName lastName avatar username")
-          .skip(parseInt(page) * parseInt(limit))
-          .limit(parseInt(limit));
+          .skip(skip)
+          .limit(limit);
+        break;
     }
 
-    const total = await ForumPost.countDocuments(moderationFilter);
+    const totalCount = await ForumPost.countDocuments(moderationFilter);
 
-    res.json({ posts, total, page: parseInt(page), limit: parseInt(limit) });
+    res.json({
+      posts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalPosts: totalCount,
+        hasMore: skip + posts.length < totalCount,
+      },
+    });
   } catch (error) {
+    console.error("Error fetching posts:", error);
     res.status(500).json({ error: error.message });
   }
 };

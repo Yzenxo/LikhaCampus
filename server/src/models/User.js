@@ -52,6 +52,10 @@ const UserSchema = new mongoose.Schema(
       caption: { type: String, default: "" },
       order: { type: String, default: "" },
     },
+    headerImage: {
+      url: { type: String },
+      publicId: { type: String },
+    },
 
     role: { type: String, enum: ["user", "admin"], default: "user" },
 
@@ -76,21 +80,17 @@ const UserSchema = new mongoose.Schema(
     needsReVerification: { type: Boolean, default: false },
     reVerificationReason: { type: String, default: "" },
 
-    // ===== LOGIN ATTEMPTS & LOCK =====
     loginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date },
 
-    // ===== DEACTIVATION =====
     isDeactivated: { type: Boolean, default: false },
     deactivatedAt: { type: Date, default: null },
 
-    // ===== SUSPENSION =====
     isSuspended: { type: Boolean, default: false },
     suspensionDate: { type: Date, default: null },
     suspensionDuration: { type: Number, default: 0 },
     suspensionReason: { type: String, default: "" },
 
-    // ===== BAN =====
     isBanned: { type: Boolean, default: false },
     banReason: { type: String, default: "" },
 
@@ -113,7 +113,6 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Virtual for checking if account is temporarily locked
 UserSchema.virtual("isLocked").get(function () {
   return !!(this.lockUntil && this.lockUntil > Date.now());
 });

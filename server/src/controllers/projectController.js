@@ -139,18 +139,54 @@ export const getTaggedProjects = async (req, res) => {
   }
 };
 
-// ===== GET ALL PROJECTS =====
+// ===== GET ALL PROJECTS (WITH PAGINATION & FILTERS) =====
 export const getProjects = async (req, res) => {
   try {
-    const projects = await Project.find({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const { skill, category, search } = req.query;
+
+    let filter = {
       isArchived: false,
       "moderation.status": "active",
-    })
-      .populate("author", "firstName lastName avatar username")
-      .sort({ createdAt: -1 });
+    };
 
-    res.json({ projects });
+    if (skill) {
+      filter.skill = skill;
+    }
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const projects = await Project.find(filter)
+      .populate("author", "firstName lastName avatar username")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalCount = await Project.countDocuments(filter);
+
+    res.json({
+      projects,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalProjects: totalCount,
+        hasMore: skip + projects.length < totalCount,
+      },
+    });
   } catch (error) {
+    console.error("Error fetching projects:", error);
     res.status(500).json({ error: error.message });
   }
 };

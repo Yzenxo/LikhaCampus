@@ -261,6 +261,7 @@ export const loginUser = async (req, res) => {
       await user.save({ validateBeforeSave: false });
     }
 
+    // ===== CHECK ACCOUNT LOCK =====
     if (user.lockUntil && user.lockUntil > Date.now()) {
       const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
       return res.status(423).json({
@@ -268,18 +269,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    if (user.isSuspended) {
-      return res
-        .status(403)
-        .json({ message: `Account suspended: ${user.suspensionReason}` });
-    }
-
-    if (user.isBanned) {
-      return res
-        .status(403)
-        .json({ message: `Account banned: ${user.banReason}` });
-    }
-
+    // ===== CHECK IF SUSPENDED (WITH AUTO-LIFT & REMAINING TIME) =====
     if (user.isSuspended) {
       const now = new Date();
       const suspensionEnd = new Date(user.suspensionDate);
@@ -288,17 +278,27 @@ export const loginUser = async (req, res) => {
       );
 
       if (now >= suspensionEnd) {
-        // Lift suspension automatically
         user.isSuspended = false;
         user.suspensionReason = "";
         user.suspensionDate = null;
-        user.suspensionDuration = 0;
+        user.suspensionDuration = null;
         await user.save();
+        console.log(`Auto-lifted suspension for ${user.email} during login`);
       } else {
-        throw new Error(
-          `Account temporarily suspended until ${suspensionEnd.toLocaleString()}`
-        );
+        const hoursLeft = Math.ceil((suspensionEnd - now) / (1000 * 60 * 60));
+        const minutesLeft = Math.ceil((suspensionEnd - now) / (1000 * 60));
+
+        return res.status(403).json({
+          message: `Account suspended: ${user.suspensionReason}. Suspension ends in ${hoursLeft}h ${minutesLeft % 60}m.`,
+          suspensionEnd: suspensionEnd.toISOString(),
+        });
       }
+    }
+
+    if (user.isBanned) {
+      return res.status(403).json({
+        message: `Account permanently banned: ${user.banReason}`,
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -307,7 +307,6 @@ export const loginUser = async (req, res) => {
       user.loginAttempts += 1;
 
       if (user.loginAttempts >= MAX_LOGIN_ATTEMPTS) {
-        // Exponential backoff
         const lockMultiplier = Math.min(Math.pow(2, user.lockCount || 0), 8);
         const newLockTime = BASE_LOCK_TIME * lockMultiplier;
         const finalLockTime = Math.min(newLockTime, 24 * 60 * 60 * 1000);
@@ -331,7 +330,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Reset attempts on successful login
+    // ===== SUCCESS - RESET ATTEMPTS =====
     user.loginAttempts = 0;
     user.lockUntil = undefined;
     user.lockCount = 0;
@@ -690,7 +689,7 @@ export const reVerifyUser = async (req, res) => {
   try {
     const userId = req.session.userId;
     const registrationForm = req.file;
-    const { yearLevel } = req.body; // ADD THIS
+    const { yearLevel } = req.body;
 
     if (!registrationForm) {
       return res.status(400).json({
@@ -766,7 +765,7 @@ export const reVerifyUser = async (req, res) => {
     user.registrationFormVerified = true;
     user.needsReVerification = false;
     user.reVerificationReason = "";
-    user.yearLevel = yearLevel; // ADD THIS - Update the year level
+    user.yearLevel = yearLevel;
 
     await user.save();
 
@@ -776,7 +775,7 @@ export const reVerifyUser = async (req, res) => {
         needsReVerification: false,
         registrationSemester: user.registrationSemester,
         registrationAcademicYear: user.registrationAcademicYear,
-        yearLevel: user.yearLevel, // ADD THIS to response
+        yearLevel: user.yearLevel,
       },
     });
   } catch (error) {

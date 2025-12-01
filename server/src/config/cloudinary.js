@@ -108,9 +108,9 @@ const announcementStorage = new CloudinaryStorage({
 
 // UPDATED: Use local storage for registration forms
 export const uploadRegistrationForm = multer({
-  storage: localRegistrationFormStorage, // Changed to local storage
+  storage: localRegistrationFormStorage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 10 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === "application/pdf") {

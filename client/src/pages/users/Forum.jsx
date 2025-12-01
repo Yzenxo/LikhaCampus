@@ -1,5 +1,7 @@
 import axios from "axios";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ForumPost from "../../components/User/ForumPost";
 import ForumSortDropdown from "../../components/User/ForumSortDropdown";
 import { useAlert } from "../../hooks/useAlert";
@@ -8,12 +10,24 @@ import { useScrollToHash } from "../../hooks/useScrollToHash";
 const Forum = () => {
   useScrollToHash();
   const { showAlert } = useAlert();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const [posts, setPosts] = useState([]);
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState("trending");
+
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "newest");
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get("page")) || 1
+  );
+  const [pagination, setPagination] = useState({
+    totalPages: 1,
+    totalPosts: 0,
+    hasMore: false,
+  });
 
   useEffect(() => {
     axios
@@ -30,17 +44,45 @@ const Forum = () => {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (sortBy !== "newest") {
+      params.set("sort", sortBy);
+    }
+
+    if (currentPage > 1) {
+      params.set("page", currentPage.toString());
+    }
+
+    const newUrl = params.toString() ? `/forum?${params.toString()}` : "/forum";
+    navigate(newUrl, { replace: true });
+  }, [sortBy, currentPage, navigate]);
+
+  // Fetch posts when URL params change
+  useEffect(() => {
     fetchPosts();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [sortBy, currentPage]);
+
+  // Reset to page 1 when sort changes
+  useEffect(() => {
+    setCurrentPage(1);
   }, [sortBy]);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/forum/posts?sortBy=${sortBy}`, {
+      const response = await axios.get(`/forum/posts`, {
+        params: {
+          sortBy: sortBy,
+          page: currentPage,
+          limit: 15,
+        },
         withCredentials: true,
       });
 
       setPosts(response.data.posts || []);
+      setPagination(response.data.pagination);
     } catch (error) {
       console.error("Error fetching posts: ", error);
     } finally {
@@ -123,10 +165,18 @@ const Forum = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg">
+          Loading posts...
+        </span>
       </div>
     );
   }
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   return (
     <>
@@ -220,6 +270,65 @@ const Forum = () => {
               />
             </div>
           ))
+        )}
+
+        {pagination.totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8 mb-6">
+            <button
+              className="btn btn-sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </button>
+
+            <div className="flex gap-1">
+              {[...Array(pagination.totalPages)]
+                .map((_, idx) => idx + 1)
+                .filter((page) => {
+                  return (
+                    page === 1 ||
+                    page === pagination.totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1) ||
+                    page === currentPage - 2 ||
+                    page === currentPage + 2
+                  );
+                })
+                .map((page) => {
+                  if (page === currentPage - 2 || page === currentPage + 2) {
+                    return (
+                      <span
+                        key={page}
+                        className="btn btn-sm btn-ghost btn-disabled"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return (
+                    <button
+                      key={page}
+                      className={`btn btn-sm ${
+                        currentPage === page ? "btn-primary" : "btn-ghost"
+                      }`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+            </div>
+
+            <button
+              className="btn btn-sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === pagination.totalPages}
+            >
+              Next
+              <ChevronRight size={16} />
+            </button>
+          </div>
         )}
       </div>
     </>

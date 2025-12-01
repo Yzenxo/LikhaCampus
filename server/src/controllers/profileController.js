@@ -101,7 +101,6 @@ export const updateProfile = async (req, res) => {
         url: req.file.path,
         publicId: req.file.filename,
       };
-      console.log("New avatar prepared:", updateData.avatar);
     }
 
     const user = await User.findByIdAndUpdate(req.session.userId, updateData, {
@@ -145,8 +144,8 @@ export const uploadHeaderImage = async (req, res) => {
     }
 
     user.headerImage = {
-      url: req.file.path,
-      publicId: req.file.filename,
+      url: req.file.path || req.file.secure_url,
+      publicId: req.file.filename || req.file.public_id,
     };
 
     await user.save();

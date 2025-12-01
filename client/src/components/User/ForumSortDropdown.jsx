@@ -8,7 +8,7 @@ const ForumSortDropdown = ({ sortBy, setSortBy }) => {
       <div className="flex justify-end p-3">
         <div className="dropdown dropdown-end">
           <select
-            defaultValue={sortBy}
+            value={sortBy}
             onChange={handleSortChange}
             className="select select-primary"
           >

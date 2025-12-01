@@ -1,7 +1,9 @@
 import axios from "axios";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { ProjectCard } from "../../components/User/ProjectCards";
 import SkillDropdown from "../../components/User/SkillDropdown";
+import UploadProjectModal from "../../components/User/UploadProjectModal.jsx";
 import { UserContext } from "../../context/UserContext";
 import { useScrollToHash } from "../../hooks/useScrollToHash.js";
 
@@ -9,31 +11,58 @@ const Projects = () => {
   useScrollToHash();
   const { user: currentUser } = useContext(UserContext);
   const [projects, setProjects] = useState([]);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSkill, setSelectedSkill] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    totalPages: 1,
+    totalProjects: 0,
+    hasMore: false,
+  });
+  const projectsPerPage = 12;
+
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get("/projects", {
-          withCredentials: true,
-        });
-
-        setProjects(response.data.projects || []);
-        setFilteredProjects(response.data.projects || []);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProjects();
-  }, []);
+  }, [currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSkill, selectedCategory, searchQuery]);
+
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/projects", {
+        params: {
+          page: currentPage,
+          limit: projectsPerPage,
+          skill: selectedSkill || undefined,
+          category: selectedCategory || undefined,
+          search: searchQuery || undefined,
+        },
+        withCredentials: true,
+      });
+
+      setProjects(response.data.projects || []);
+      setFilteredProjects(response.data.projects || []);
+      setPagination(
+        response.data.pagination || {
+          totalPages: 1,
+          totalProjects: 0,
+          hasMore: false,
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let filtered = [...projects];
@@ -64,10 +93,14 @@ const Projects = () => {
 
   const handleDeleteProject = (projectId) => {
     setProjects((prev) => prev.filter((p) => p._id !== projectId));
+    setFilteredProjects((prev) => prev.filter((p) => p._id !== projectId));
   };
 
   const handleUpdateProject = (updatedProject) => {
     setProjects((prev) =>
+      prev.map((p) => (p._id === updatedProject._id ? updatedProject : p))
+    );
+    setFilteredProjects((prev) =>
       prev.map((p) => (p._id === updatedProject._id ? updatedProject : p))
     );
   };
@@ -76,12 +109,22 @@ const Projects = () => {
     setSelectedSkill("");
     setSelectedCategory("");
     setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg">
+          Loading projects...
+        </span>
       </div>
     );
   }
@@ -91,8 +134,22 @@ const Projects = () => {
       <h1 className="text-4xl font-bold royal-blue">PROJECTS</h1>
 
       <div className="container mx-auto mt-4 max-w-5xl">
-        <div className="text-sm text-gray-600">
-          Showing {filteredProjects.length} of {projects.length} projects
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-sm text-gray-600">
+            Showing {filteredProjects.length} projects (Page {currentPage} of{" "}
+            {pagination.totalPages})
+            {pagination.totalProjects > 0 &&
+              ` • ${pagination.totalProjects} total`}
+          </div>
+          {/* CTA FOR UPLOAD PROJECT */}
+          {currentUser && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setIsUploadModalOpen(true)}
+            >
+              Upload Project
+            </button>
+          )}
         </div>
 
         {/* FILTER SECTION & SEARCH BAR */}
@@ -211,20 +268,93 @@ const Projects = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg-grid-cols-3 gap-4 mt-6">
-            {filteredProjects.map((project) => (
-              <ProjectCard
-                key={project._id}
-                project={project}
-                currentUser={currentUser}
-                profileUserId={null}
-                onDelete={handleDeleteProject}
-                onUpdate={handleUpdateProject}
-                loading={false}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              {filteredProjects.map((project) => (
+                <ProjectCard
+                  key={project._id}
+                  project={project}
+                  currentUser={currentUser}
+                  profileUserId={null}
+                  onDelete={handleDeleteProject}
+                  onUpdate={handleUpdateProject}
+                  loading={false}
+                />
+              ))}
+            </div>
+
+            {/* PAGINATION CONTROLS */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mt-8 mb-6">
+                <button
+                  className="btn btn-sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </button>
+
+                <div className="flex gap-1">
+                  {[...Array(pagination.totalPages)]
+                    .map((_, idx) => idx + 1)
+                    .filter((page) => {
+                      return (
+                        page === 1 ||
+                        page === pagination.totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1) ||
+                        page === currentPage - 2 ||
+                        page === currentPage + 2
+                      );
+                    })
+                    .map((page) => {
+                      if (
+                        page === currentPage - 2 ||
+                        page === currentPage + 2
+                      ) {
+                        return (
+                          <span
+                            key={page}
+                            className="btn btn-sm btn-ghost btn-disabled"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+                      return (
+                        <button
+                          key={page}
+                          className={`btn btn-sm ${
+                            currentPage === page ? "btn-primary" : "btn-ghost"
+                          }`}
+                          onClick={() => handlePageChange(page)}
+                        >
+                          {page}
+                        </button>
+                      );
+                    })}
+                </div>
+
+                <button
+                  className="btn btn-sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === pagination.totalPages}
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+          </>
         )}
+        <UploadProjectModal
+          show={isUploadModalOpen}
+          onHide={() => setIsUploadModalOpen(false)}
+          onSave={() => {
+            setIsUploadModalOpen(false);
+            fetchProjects();
+          }}
+        />
       </div>
     </>
   );

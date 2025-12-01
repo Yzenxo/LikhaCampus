@@ -2,7 +2,6 @@ import User from "../models/User.js";
 
 export const checkReVerification = async (req, res, next) => {
   try {
-    // Skip check for public routes
     const publicPaths = [
       "/api/auth/register",
       "/api/auth/login",

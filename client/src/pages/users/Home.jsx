@@ -1,21 +1,26 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import favicon from "../../../public/favicon.png";
 import students from "../../assets/Students-pana.png";
 import hero from "../../assets/cover.png";
 import logo from "../../assets/logo.png";
 import FeaturedArtist from "../../components/User/FeaturedArtist.jsx";
+import GuidelinesModal from "../../components/User/GuidelinesModal.jsx";
+import TermsNConditionsModal from "../../components/User/TermsNConditionsModal.jsx";
 import { useScrollToHash } from "../../hooks/useScrollToHash.js";
 
 const Home = () => {
   useScrollToHash();
   const navigate = useNavigate();
+  const termsModalRef = useRef();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [showGuidelinesModal, setShowGuidelinesModal] = useState(false);
 
   useEffect(() => {
     fetchAnnouncements();
@@ -105,7 +110,7 @@ const Home = () => {
             <img
               src={logo}
               alt="LikhaCampus Logo"
-              className="w-16 h-16 sm:w-20 sm:h-20"
+              className="h-24 w-auto mx-auto mb-6 object-contain"
             />
           </div>
 
@@ -372,13 +377,15 @@ const Home = () => {
         </div>
       </div>
 
-      <footer className="bg-gray-100 text-gray-800 py-10 mt-16">
+      {/* FOOTER*/}
+      <footer className="bg-gray-100 text-gray-800 py-10 mt-16 -mx-6 w-screen">
         <div className="container mx-auto px-6 max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6 px-6">
+            {/* LOGO & DESCRIPTION */}
+            <div className="md:col-span-1">
               <div className="flex items-center mb-3">
                 <img
-                  src={logo}
+                  src={favicon}
                   alt="LikhaCampus Logo"
                   className="w-10 h-10 mr-2"
                 />
@@ -392,22 +399,17 @@ const Home = () => {
               </p>
             </div>
 
-            <div>
+            {/* QUICK LINKS */}
+            <div className="md:col-span-1">
               <h4 className="text-lg font-semibold mb-3 text-[#00017a]">
                 Quick Links
               </h4>
-              <nav className="grid grid-cols-2 gap-2">
-                <a
-                  className="link link-hover text-gray-600 hover:text-[#00017a] transition text-sm cursor-pointer"
-                  onClick={() => navigate("/home")}
-                >
-                  Home
-                </a>
+              <nav className="flex flex-col gap-2">
                 <a
                   className="link link-hover text-gray-600 hover:text-[#00017a] transition text-sm cursor-pointer"
                   onClick={() => navigate("/projects")}
                 >
-                  Projects
+                  Explore Projects
                 </a>
                 <a
                   className="link link-hover text-gray-600 hover:text-[#00017a] transition text-sm cursor-pointer"
@@ -420,6 +422,27 @@ const Home = () => {
                   onClick={() => navigate("/faq")}
                 >
                   FAQ
+                </a>
+              </nav>
+            </div>
+
+            {/* LEGAL */}
+            <div className="md:col-span-1">
+              <h4 className="text-lg font-semibold mb-3 text-[#00017a]">
+                Legal
+              </h4>
+              <nav className="flex flex-col gap-2">
+                <a
+                  className="link link-hover text-gray-600 hover:text-[#00017a] transition text-sm cursor-pointer"
+                  onClick={() => termsModalRef.current?.open()}
+                >
+                  Privacy Policy & Terms
+                </a>
+                <a
+                  className="link link-hover text-gray-600 hover:text-[#00017a] transition text-sm cursor-pointer"
+                  onClick={() => setShowGuidelinesModal(true)}
+                >
+                  Community Guidelines
                 </a>
               </nav>
             </div>
@@ -473,6 +496,16 @@ const Home = () => {
           </div>
         </dialog>
       )}
+
+      {/* LEGAL MODALS */}
+      <TermsNConditionsModal ref={termsModalRef} />
+      <GuidelinesModal
+        isOpen={showGuidelinesModal}
+        onClose={() => setShowGuidelinesModal(false)}
+        onAccept={() => {
+          setShowGuidelinesModal(false);
+        }}
+      />
     </>
   );
 };

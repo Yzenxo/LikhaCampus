@@ -29,10 +29,7 @@ const ForgotPassword = () => {
       if (response.status === 200) {
         setSubmittedEmail(data.email);
         setEmailSent(true);
-        showAlert(
-          "If that email exists, a reset link has been sent!",
-          "success"
-        );
+        showAlert("If that email exists, a reset link has been sent!", "info");
       }
     } catch (error) {
       showAlert(
@@ -206,11 +203,13 @@ const ForgotPassword = () => {
                       Check Your Email
                     </h2>
                     <p className="text-gray-600 mb-4">
-                      We've sent password reset instructions to:
+                      If an account exists for{" "}
+                      <span className="text-primary font-semibold mb-6">
+                        {submittedEmail}
+                      </span>
+                      , we've sent password reset instructions.
                     </p>
-                    <p className="text-primary font-semibold mb-6">
-                      {submittedEmail}
-                    </p>
+                    <p className="text-primary font-semibold mb-6"></p>
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                       <p className="text-sm text-gray-700">
                         <strong>Next steps:</strong>

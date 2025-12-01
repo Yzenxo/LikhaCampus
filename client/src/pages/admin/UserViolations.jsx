@@ -1,5 +1,5 @@
 import axios from "axios";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import defaultAvatar from "../../assets/default_avatar.jpg";
 import { useAlert } from "../../hooks/useAlert";
@@ -16,21 +16,37 @@ const UserViolations = () => {
   const [actionReason, setActionReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [suspensionDuration, setSuspensionDuration] = useState(24);
-  const [timer, setTimer] = useState(0); // triggers re-render for countdown
+  const [timer, setTimer] = useState(0);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    totalPages: 1,
+    totalUsers: 0,
+    hasMore: false,
+  });
 
   useEffect(() => {
     fetchReportedUsers();
-    const interval = setInterval(() => setTimer((t) => t + 1), 60000); // re-render every minute
+    const interval = setInterval(() => setTimer((t) => t + 1), 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentPage]);
 
   const fetchReportedUsers = async () => {
     try {
       setLoading(true);
       const response = await axios.get("/admin/reported-users", {
+        params: { page: currentPage, limit: 20 },
         withCredentials: true,
       });
       setReportedUsers(response.data.users || []);
+      setPagination(
+        response.data.pagination || {
+          totalPages: 1,
+          totalUsers: 0,
+          hasMore: false,
+        }
+      );
     } catch (error) {
       console.error("Error fetching violation users:", error);
       showAlert("Failed to load violation users", "error");
@@ -96,16 +112,12 @@ const UserViolations = () => {
     }
   };
 
-  // Returns remaining time for suspension or temporary ban
-  const getRemainingTime = (user, type = "suspension") => {
-    const dateKey = type === "suspension" ? "suspensionDate" : "banDate";
-    const durationKey =
-      type === "suspension" ? "suspensionDuration" : "banDuration";
+  const getRemainingTime = (user) => {
+    if (!user.suspensionDate || !user.suspensionDuration) return null;
 
-    if (!user[dateKey] || !user[durationKey]) return null;
     const now = new Date();
-    const end = new Date(user[dateKey]);
-    end.setHours(end.getHours() + user[durationKey]);
+    const end = new Date(user.suspensionDate);
+    end.setHours(end.getHours() + user.suspensionDuration);
 
     const remainingMs = end - now;
     if (remainingMs <= 0) return 0;
@@ -118,14 +130,38 @@ const UserViolations = () => {
   const handleUnSuspend = async (userId) => {
     try {
       setActionLoading(userId);
-      await axios.patch(`/admin/users/${userId}/un-suspend`, {
-        withCredentials: true,
-      });
+      await axios.patch(
+        `/admin/users/${userId}/un-suspend`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
       showAlert("User has been un-suspended", "success");
       fetchReportedUsers();
     } catch (err) {
       console.error(err);
       showAlert("Failed to un-suspend user", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnban = async (userId) => {
+    try {
+      setActionLoading(userId);
+      await axios.patch(
+        `/admin/users/${userId}/unban`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+      showAlert("User has been unbanned", "success");
+      fetchReportedUsers();
+    } catch (err) {
+      console.error(err);
+      showAlert("Failed to unban user", "error");
     } finally {
       setActionLoading(null);
     }
@@ -150,8 +186,7 @@ const UserViolations = () => {
     const isLoading = actionLoading === user._id;
     const pendingReports =
       user.reports?.filter((r) => r.status === "pending") || [];
-    const suspensionRemaining = getRemainingTime(user, "suspension");
-    const banRemaining = getRemainingTime(user, "ban");
+    const suspensionRemaining = getRemainingTime(user);
 
     return (
       <div key={user._id} className="card bg-base-100 shadow-md p-4 mb-4">
@@ -221,6 +256,25 @@ const UserViolations = () => {
           </div>
         )}
 
+        {activeTab === "Warnings" && user.warnings?.length > 0 && (
+          <div className="card bg-base-200 p-3 rounded-lg mb-3">
+            <p className="font-semibold text-sm mb-3">Warnings:</p>
+            {user.warnings.map((warning, idx) => (
+              <div
+                key={idx}
+                className="bg-base-100 p-3 rounded-lg mb-2 border border-warning"
+              >
+                <p className="text-sm">
+                  <strong>Reason:</strong> {warning.reason}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {new Date(warning.date).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {(activeTab === "Suspended" || activeTab === "Banned") && (
           <div className="mb-2">
             {activeTab === "Suspended" && (
@@ -240,10 +294,11 @@ const UserViolations = () => {
                   <p className="text-xs text-gray-500">Suspension ended</p>
                 )}
                 <button
-                  className="btn btn-primary mt-2"
+                  className="btn btn-primary btn-sm mt-2"
                   onClick={() => handleUnSuspend(user._id)}
+                  disabled={isLoading}
                 >
-                  Un-suspend
+                  {isLoading ? "..." : "Un-suspend"}
                 </button>
               </>
             )}
@@ -255,16 +310,16 @@ const UserViolations = () => {
                 <p className="text-xs text-gray-500">
                   Banned on {new Date(user.banDate).toLocaleString()}
                 </p>
-                {banRemaining && (
-                  <p className="text-xs text-gray-500">
-                    Remaining: {banRemaining.hours}h {banRemaining.minutes}m
-                  </p>
-                )}
-                {!banRemaining && (
-                  <p className="text-xs text-gray-500">
-                    {user.banDuration ? "Ban ended" : "Permanent ban"}
-                  </p>
-                )}
+                <p className="text-xs text-error font-semibold mt-2">
+                  Permanent Ban
+                </p>
+                <button
+                  className="btn btn-primary btn-sm mt-2"
+                  onClick={() => handleUnban(user._id)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "..." : "Unban User"}
+                </button>
               </>
             )}
           </div>
@@ -292,15 +347,25 @@ const UserViolations = () => {
     );
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   return (
     <div className="container mx-auto p-3 space-y-6">
       <div className="mb-6">
         <h2 className="text-2xl royal-blue font-bold flex items-center gap-2">
           <AlertTriangle size={24} /> User Violations
         </h2>
+        <p className="text-sm text-gray-500 mt-1">
+          Total users: {pagination.totalUsers}
+        </p>
       </div>
 
-      <div className="tabs mb-4">
+      <div className="tabs tabs-boxed mb-4">
         {tabs.map((tab) => {
           const count = reportedUsers.filter((user) => {
             switch (tab) {
@@ -335,23 +400,148 @@ const UserViolations = () => {
           No users in "{activeTab}"
         </p>
       ) : (
-        filteredUsers.map((user) => renderUser(user))
+        <>
+          {filteredUsers.map((user) => renderUser(user))}
+
+          {/* PAGINATION CONTROLS */}
+          {pagination.totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <button
+                className="btn btn-sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+
+              <div className="flex gap-1">
+                {[...Array(pagination.totalPages)].map((_, idx) => {
+                  const page = idx + 1;
+                  if (
+                    page === 1 ||
+                    page === pagination.totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={page}
+                        className={`btn btn-sm ${
+                          currentPage === page ? "btn-primary" : "btn-ghost"
+                        }`}
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </button>
+                    );
+                  } else if (
+                    page === currentPage - 2 ||
+                    page === currentPage + 2
+                  ) {
+                    return (
+                      <span
+                        key={page}
+                        className="btn btn-sm btn-ghost btn-disabled"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                className="btn btn-sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === pagination.totalPages}
+              >
+                Next
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </>
       )}
 
-      {selectedAction === "suspend" && (
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text font-semibold">
-              Suspension Duration (hours)
-            </span>
-          </label>
-          <input
-            type="number"
-            min={1}
-            className="input input-bordered w-full"
-            value={suspensionDuration}
-            onChange={(e) => setSuspensionDuration(Number(e.target.value))}
-          />
+      {/* Action Modal */}
+      {actionModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">Take Action on User</h3>
+
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-semibold">Action Type</span>
+              </label>
+              <select
+                className="select select-bordered w-full"
+                value={selectedAction}
+                onChange={(e) => setSelectedAction(e.target.value)}
+              >
+                <option value="">Select action...</option>
+                <option value="warning">Issue Warning</option>
+                <option value="suspend">Suspend Account</option>
+                <option value="ban">Ban Account</option>
+              </select>
+            </div>
+
+            {selectedAction === "suspend" && (
+              <div className="form-control mb-4">
+                <label className="label">
+                  <span className="label-text font-semibold">
+                    Suspension Duration (hours)
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  className="input input-bordered w-full"
+                  value={suspensionDuration}
+                  onChange={(e) =>
+                    setSuspensionDuration(Number(e.target.value))
+                  }
+                />
+              </div>
+            )}
+
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text font-semibold">Reason</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows={4}
+                placeholder="Provide a reason for this action..."
+                value={actionReason}
+                onChange={(e) => setActionReason(e.target.value)}
+              />
+            </div>
+
+            <div className="modal-action">
+              <button
+                className="btn"
+                onClick={() => {
+                  setActionModal(null);
+                  setSelectedAction("");
+                  setActionReason("");
+                  setSuspensionDuration(24);
+                }}
+                disabled={isProcessing}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-error"
+                onClick={handleTakeAction}
+                disabled={
+                  isProcessing || !selectedAction || !actionReason.trim()
+                }
+              >
+                {isProcessing ? "Processing..." : "Confirm Action"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

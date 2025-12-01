@@ -40,6 +40,232 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
+// ===== GET REPORT STATS =====
+export const getReportStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments({ role: { $ne: "admin" } });
+    const totalProjects = await Project.countDocuments(
+      { isArchived: false },
+      { "moderation.status": "active" }
+    );
+    const totalPosts = await ForumPost.countDocuments({
+      "moderation.status": "active",
+    });
+
+    const popularSkills = await Project.aggregate([
+      { $match: { isArchived: false, "moderation.status": "active" } },
+      { $unwind: "$skill" },
+      { $group: { _id: "$skill", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+      { $project: { name: "$_id", count: 1, _id: 0 } },
+    ]);
+
+    const now = new Date();
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      0,
+      23,
+      59,
+      59
+    );
+
+    const postsThisMonth = await ForumPost.countDocuments({
+      createdAt: { $gte: startOfThisMonth },
+      "moderation.status": "active",
+    });
+
+    const postsLastMonth = await ForumPost.countDocuments({
+      createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+      "moderation.status": "active",
+    });
+
+    const activeUsersWithPosts = await ForumPost.aggregate([
+      { $match: { "moderation.status": "active" } },
+      { $group: { _id: "$author", postCount: { $sum: 1 } } },
+      { $group: { _id: null, avgPosts: { $avg: "$postCount" } } },
+    ]);
+
+    const avgPostsPerActiveUser =
+      activeUsersWithPosts.length > 0 ? activeUsersWithPosts[0].avgPosts : 0;
+
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const monthlyPosts = await ForumPost.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sixMonthsAgo },
+          "moderation.status": "active",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      {
+        $project: {
+          _id: 0,
+          month: {
+            $concat: [
+              {
+                $arrayElemAt: [
+                  [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                  ],
+                  { $subtract: ["$_id.month", 1] },
+                ],
+              },
+              " ",
+              { $toString: "$_id.year" },
+            ],
+          },
+          count: 1,
+        },
+      },
+    ]);
+
+    // ===== NEW PROJECT STATS =====
+    const monthlyProjects = await Project.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sixMonthsAgo },
+          isArchived: false,
+          "moderation.status": "active",
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            month: { $month: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+      {
+        $project: {
+          _id: 0,
+          month: {
+            $concat: [
+              {
+                $arrayElemAt: [
+                  [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                  ],
+                  { $subtract: ["$_id.month", 1] },
+                ],
+              },
+              " ",
+              { $toString: "$_id.year" },
+            ],
+          },
+          count: 1,
+        },
+      },
+    ]);
+
+    const projectsByStatus = await Project.aggregate([
+      { $match: { isArchived: false, "moderation.status": "active" } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $project: { name: "$_id", count: 1, _id: 0 } },
+    ]);
+
+    const totalCollaborations = await Project.aggregate([
+      { $match: { isArchived: false, "moderation.status": "active" } },
+      { $unwind: "$taggedUsers" },
+      { $count: "total" },
+    ]);
+
+    const collaborationsCount =
+      totalCollaborations.length > 0 ? totalCollaborations[0].total : 0;
+
+    const avgTeamSize = await Project.aggregate([
+      { $match: { isArchived: false, "moderation.status": "active" } },
+      {
+        $project: {
+          teamSize: { $size: { $ifNull: ["$taggedUsers", []] } },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avgSize: { $avg: "$teamSize" },
+        },
+      },
+    ]);
+
+    const averageTeamSize = avgTeamSize.length > 0 ? avgTeamSize[0].avgSize : 0;
+
+    const projectsThisMonth = await Project.countDocuments({
+      createdAt: { $gte: startOfThisMonth },
+      isArchived: false,
+      "moderation.status": "active",
+    });
+
+    const projectsLastMonth = await Project.countDocuments({
+      createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+      isArchived: false,
+      "moderation.status": "active",
+    });
+
+    res.json({
+      stats: {
+        totalUsers,
+        totalProjects,
+        totalPosts,
+        popularSkills,
+        postsThisMonth,
+        postsLastMonth,
+        avgPostsPerActiveUser,
+        monthlyPosts,
+        monthlyProjects,
+        projectsByStatus,
+        totalCollaborations: collaborationsCount,
+        averageTeamSize,
+        projectsThisMonth,
+        projectsLastMonth,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching report stats:", error);
+    res.status(500).json({ error: "Failed to fetch statistics" });
+  }
+};
+
 // ===== GET ALL PROJECTS =====
 export const getAllProjects = async (req, res) => {
   try {
@@ -318,9 +544,13 @@ export const updateUserRole = async (req, res) => {
   }
 };
 
-// ===== GET REPORTED USERS (3+ pending reports) =====
+// ===== GET REPORTED USERS (OPTIMIZED) =====
 export const getReportedUsers = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
     const users = await User.find({
       $or: [
         { "reports.status": "pending" },
@@ -328,34 +558,55 @@ export const getReportedUsers = async (req, res) => {
         { isSuspended: true },
         { isBanned: true },
       ],
-    }).populate("reports.reportedBy", "firstName lastName username");
+    })
+      .select("-password")
+      .populate("reports.reportedBy", "firstName lastName username")
+      .sort({ "reports.0.date": -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    res.json({ users });
+    const totalCount = await User.countDocuments({
+      $or: [
+        { "reports.status": "pending" },
+        { warnings: { $exists: true, $not: { $size: 0 } } },
+        { isSuspended: true },
+        { isBanned: true },
+      ],
+    });
+
+    res.json({
+      users,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalUsers: totalCount,
+        hasMore: skip + users.length < totalCount,
+      },
+    });
   } catch (error) {
     console.error("Error fetching violation users:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-// ===== DISMISS USER REPORTS =====
+// ===== DISMISS USER REPORTS (OPTIMIZED) =====
 export const dismissUserReports = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+    const result = await User.updateOne(
+      { _id: userId, "reports.status": "pending" },
+      { $set: { "reports.$[elem].status": "dismissed" } },
+      { arrayFilters: [{ "elem.status": "pending" }] }
+    );
+
+    if (result.matchedCount === 0) {
+      return res
+        .status(404)
+        .json({ error: "User not found or no pending reports" });
     }
 
-    user.reports.forEach((report) => {
-      if (report.status === "pending") {
-        report.status = "dismissed";
-      }
-    });
-
-    await user.save();
-
-    console.log(`Reports dismissed for user: ${user.username}`);
+    console.log(`Reports dismissed for user: ${userId}`);
 
     res.json({ message: "Reports dismissed successfully" });
   } catch (error) {
@@ -364,11 +615,11 @@ export const dismissUserReports = async (req, res) => {
   }
 };
 
-// ===== TAKE ACTION ON USER =====
+// ===== TAKE ACTION ON USER (OPTIMIZED) =====
 export const takeActionOnUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { action, reason } = req.body;
+    const { action, reason, duration } = req.body;
 
     if (!action || !reason) {
       return res.status(400).json({ error: "Action and reason are required" });
@@ -379,52 +630,64 @@ export const takeActionOnUser = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    user.reports.forEach((report) => {
-      if (report.status === "pending") {
-        report.status = "reviewed";
-      }
-    });
+    // Mark all pending reports as reviewed using atomic update
+    await User.updateOne(
+      { _id: userId, "reports.status": "pending" },
+      { $set: { "reports.$[elem].status": "reviewed" } },
+      { arrayFilters: [{ "elem.status": "pending" }] }
+    );
+
+    let updateFields = {};
 
     switch (action) {
       case "warning":
-        console.log(`⚠️ Warning issued to ${user.username}: ${reason}`);
-        user.warnings = user.warnings || [];
-        user.warnings.push({
-          reason,
-          date: new Date(),
-          admin: req.session.userId,
-        });
+        console.log(`Warning issued to ${user.username}: ${reason}`);
+        updateFields = {
+          $push: {
+            warnings: {
+              reason,
+              date: new Date(),
+              admin: req.session.userId,
+            },
+          },
+        };
         break;
 
       case "suspend":
-        const durationHours = req.body.duration || 24;
-        user.isSuspended = true;
-        user.suspensionReason = reason;
-        user.suspensionDate = new Date();
-        user.suspensionDuration = durationHours;
-        console.log(`⏸️ Account suspended: ${user.username}`);
+        const durationHours = duration || 24;
+        updateFields = {
+          isSuspended: true,
+          suspensionReason: reason,
+          suspensionDate: new Date(),
+          suspensionDuration: durationHours,
+        };
+        console.log(`Account suspended: ${user.username}`);
         break;
 
       case "ban":
-        user.isBanned = true;
-        user.banReason = reason;
-        user.banDate = new Date();
-        console.log(`⛔ Account permanently banned: ${user.username}`);
+        updateFields = {
+          isBanned: true,
+          banReason: reason,
+          banDate: new Date(),
+        };
+        console.log(`Account permanently banned: ${user.username}`);
         break;
 
       default:
         return res.status(400).json({ error: "Invalid action" });
     }
 
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(userId, updateFields, {
+      new: true,
+    }).select("-password");
 
     res.json({
       message: `Action '${action}' taken successfully`,
       action,
       reason,
       userStatus: {
-        isSuspended: user.isSuspended || false,
-        isBanned: user.isBanned || false,
+        isSuspended: updatedUser.isSuspended || false,
+        isBanned: updatedUser.isBanned || false,
       },
     });
   } catch (error) {
@@ -433,20 +696,60 @@ export const takeActionOnUser = async (req, res) => {
   }
 };
 
+// ===== UNSUSPEND USER (OPTIMIZED) =====
 export const unsuspendUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    const { id } = req.params;
 
-    user.isSuspended = false;
-    user.suspensionReason = "";
-    user.suspensionDate = null;
-    user.suspensionDuration = null;
+    const result = await User.updateOne(
+      { _id: id, isSuspended: true },
+      {
+        $set: {
+          isSuspended: false,
+          suspensionReason: "",
+          suspensionDate: null,
+          suspensionDuration: null,
+        },
+      }
+    );
 
-    await user.save();
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "User not found or not suspended" });
+    }
+
+    console.log(`User ${id} has been un-suspended`);
+
     res.json({ message: "User has been un-suspended" });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("Error un-suspending user:", error);
     res.status(500).json({ error: "Failed to un-suspend user" });
+  }
+};
+
+export const unbanUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await User.updateOne(
+      { _id: id, isBanned: true },
+      {
+        $set: {
+          isBanned: false,
+          banReason: "",
+          banDate: null,
+        },
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ error: "User not found or not banned" });
+    }
+
+    console.log(`User ${id} has been unbanned`);
+
+    res.json({ message: "User has been unbanned" });
+  } catch (error) {
+    console.error("Error unbanning user:", error);
+    res.status(500).json({ error: "Failed to unban user" });
   }
 };

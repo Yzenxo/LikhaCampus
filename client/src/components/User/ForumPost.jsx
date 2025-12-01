@@ -1,5 +1,5 @@
 import axios from "axios";
-import { MessageCircle, UserStar } from "lucide-react";
+import { ChevronDown, ChevronUp, MessageCircle, UserStar } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -32,11 +32,12 @@ const ForumPost = ({
   const [localCommentCount, setLocalCommentCount] = useState(commentCount || 0);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [postData, setPostData] = useState({ _id, title, content });
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const MAX_CONTENT_LENGTH = 200;
 
   const [replyingTo, setReplyingTo] = useState(null);
   const [editingComment, setEditingComment] = useState(null);
 
-  // React Hook Form for comment
   const {
     register,
     handleSubmit,
@@ -344,6 +345,12 @@ const ForumPost = ({
     }
   };
 
+  const shouldTruncateContent = postData.content.length > MAX_CONTENT_LENGTH;
+  const displayContent =
+    isContentExpanded || !shouldTruncateContent
+      ? postData.content
+      : postData.content.slice(0, MAX_CONTENT_LENGTH) + "...";
+
   const renderComment = (comment, isReply = false, parentId = null) => {
     const isEditing = editingComment === comment._id;
     const isOwner = currentUser?._id === comment.author?._id;
@@ -462,7 +469,7 @@ const ForumPost = ({
               {comment.content}
             </p>
 
-            {/* Reply button (only for top-level comments) */}
+            {/* REPLY BUTTON */}
             {!isReply && (
               <button
                 className="btn btn-xs btn-ghost mt-1"
@@ -474,7 +481,7 @@ const ForumPost = ({
           </>
         )}
 
-        {/* Reply form */}
+        {/* REPLY FORM */}
         {replyingTo === comment._id && (
           <div className="mt-2 flex flex-col gap-2">
             <div className="flex gap-2">
@@ -612,9 +619,24 @@ const ForumPost = ({
         <h2 className="font-bold text-lg break-words whitespace-pre-wrap">
           {postData.title}
         </h2>
-        <p className="mb-3 break-words whitespace-pre-wrap">
-          {postData.content}
-        </p>
+        <p className="mb-3 break-words whitespace-pre-wrap">{displayContent}</p>
+
+        {shouldTruncateContent && (
+          <button
+            onClick={() => setIsContentExpanded(!isContentExpanded)}
+            className="flex items-center gap-1 text-primary font-semibold text-sm hover:underline mb-3 cursor-pointer"
+          >
+            {isContentExpanded ? (
+              <>
+                See Less <ChevronUp size={16} />
+              </>
+            ) : (
+              <>
+                See More <ChevronDown size={16} />
+              </>
+            )}
+          </button>
+        )}
 
         {/* UPVOTE + COMMENT */}
         <div className="flex justify-between items-center">
