@@ -2,6 +2,7 @@ import AdminSettings from "../models/AdminSettings.js";
 import ForumPost from "../models/ForumPost.js";
 import Project from "../models/Project.js";
 import User from "../models/User.js";
+import { sendWarningEmail } from "../services/emailService.js";
 
 // ===== GET ALL USERS =====
 export const getAllUsers = async (req, res) => {
@@ -630,7 +631,6 @@ export const takeActionOnUser = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Mark all pending reports as reviewed using atomic update
     await User.updateOne(
       { _id: userId, "reports.status": "pending" },
       { $set: { "reports.$[elem].status": "reviewed" } },
@@ -651,6 +651,24 @@ export const takeActionOnUser = async (req, res) => {
             },
           },
         };
+
+        const warningCount = (user.warnings?.length || 0) + 1;
+        try {
+          const emailResult = await sendWarningEmail(
+            user.email,
+            user.firstName,
+            reason,
+            warningCount
+          );
+
+          if (emailResult.success) {
+            console.log(`Warning email sent to ${user.email}`);
+          } else {
+            console.error(`Failed to send warning email: ${emailResult.error}`);
+          }
+        } catch (emailError) {
+          console.error("Error sending warning email:", emailError);
+        }
         break;
 
       case "suspend":
@@ -682,7 +700,7 @@ export const takeActionOnUser = async (req, res) => {
     }).select("-password");
 
     res.json({
-      message: `Action '${action}' taken successfully`,
+      message: `Action '${action}' taken successfully${action === "warning" ? " and email sent" : ""}`,
       action,
       reason,
       userStatus: {

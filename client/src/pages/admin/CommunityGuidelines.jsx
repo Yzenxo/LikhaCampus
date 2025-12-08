@@ -167,7 +167,7 @@ const CommunityGuidelines = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <span className="loading loading-spinner loading-lg">
-          Loading Guidelines
+          Loading guidelines...
         </span>
       </div>
     );
