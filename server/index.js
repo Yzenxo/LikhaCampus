@@ -159,6 +159,7 @@ import adminRoutes from "./src/routes/AdminRoutes.js";
 import announcementRoutes from "./src/routes/AnnouncementRoutes.js";
 import assessmentRoutes from "./src/routes/AssessmentRoutes.js";
 import authRoutes from "./src/routes/AuthRoutes.js";
+import categoryRequestRoutes from "./src/routes/CategoryRequestRoutes.js";
 import contributionsRoutes from "./src/routes/ContributionsRoutes.js";
 import featuredArtistRoutes from "./src/routes/FeaturedArtistRoutes.js";
 import forgotPasswordRoutes from "./src/routes/ForgotPasswordRoutes.js";
@@ -174,6 +175,7 @@ import "./src/schedulers/unsuspendUsers.js";
 
 app.use("/api/auth", authLimiter, authRoutes, forgotPasswordRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/category-request", categoryRequestRoutes);
 app.use("/api/stats", homeRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/projects", projectRoutes);

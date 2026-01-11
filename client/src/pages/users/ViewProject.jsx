@@ -1,17 +1,22 @@
 import axios from "axios";
-import { ArrowLeft, Play } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Heart, Play } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import defaultAvatar from "../../assets/default_avatar.jpg";
+import { UserContext } from "../../context/UserContext";
 
 const ViewProject = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useContext(UserContext);
   const [project, setProject] = useState(null);
   const [videoLoading, setVideoLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedMedia, setSelectedMedia] = useState(null);
+  const [upvoted, setUpvoted] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState(0);
+  const [isUpvoting, setIsUpvoting] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -21,6 +26,7 @@ const ViewProject = () => {
         });
 
         setProject(response.data);
+        setUpvoteCount(response.data.upvoteCount || 0);
       } catch (err) {
         console.error("Error fetching project:", err);
         setError(err.message);
@@ -31,6 +37,26 @@ const ViewProject = () => {
 
     fetchProject();
   }, [projectId]);
+
+  // Fetch upvote status
+  useEffect(() => {
+    const fetchUpvoteStatus = async () => {
+      if (!currentUser || !projectId) return;
+
+      try {
+        const response = await axios.get(
+          `/projects/${projectId}/upvote-status`,
+          { withCredentials: true }
+        );
+        setUpvoted(response.data.upvoted);
+        setUpvoteCount(response.data.upvoteCount);
+      } catch (error) {
+        console.error("Error fetching upvote status:", error);
+      }
+    };
+
+    fetchUpvoteStatus();
+  }, [projectId, currentUser]);
 
   useEffect(() => {
     const handleProjectUpdate = (event) => {
@@ -43,6 +69,43 @@ const ViewProject = () => {
       window.removeEventListener("projectUpdated", handleProjectUpdate);
     };
   }, []);
+
+  const handleUpvote = async () => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+
+    if (isUpvoting) return;
+
+    setIsUpvoting(true);
+
+    // Optimistic UI update
+    const previousUpvoted = upvoted;
+    const previousCount = upvoteCount;
+
+    setUpvoted(!upvoted);
+    setUpvoteCount(upvoted ? upvoteCount - 1 : upvoteCount + 1);
+
+    try {
+      const response = await axios.post(
+        `/projects/${projectId}/upvote`,
+        {},
+        { withCredentials: true }
+      );
+
+      // Update with server response
+      setUpvoted(response.data.upvoted);
+      setUpvoteCount(response.data.upvoteCount);
+    } catch (error) {
+      console.error("Error toggling upvote:", error);
+      // Revert on error
+      setUpvoted(previousUpvoted);
+      setUpvoteCount(previousCount);
+    } finally {
+      setIsUpvoting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -115,35 +178,58 @@ const ViewProject = () => {
             <div className="card-body">
               {/* AUTHOR + TITLE + DESCRIPTION */}
               <div className="border-b pb-6 mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="avatar">
-                    <div className="w-12 h-12 rounded-full">
-                      <img
-                        src={project.author?.avatar?.url || defaultAvatar}
-                        alt={project.author?.firstName || "User"}
-                      />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="avatar">
+                      <div className="w-12 h-12 rounded-full">
+                        <img
+                          src={project.author?.avatar?.url || defaultAvatar}
+                          alt={project.author?.firstName || "User"}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">
+                        {project.author?.firstName} {project.author?.lastName}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        {new Date(project.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                        {project.updatedAt &&
+                          new Date(project.updatedAt).getTime() !==
+                            new Date(project.createdAt).getTime() && (
+                            <>
+                              <span className="ml-1 italic">(Edited)</span>
+                            </>
+                          )}
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold">
-                      {project.author?.firstName} {project.author?.lastName}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      {new Date(project.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                      {project.updatedAt &&
-                        new Date(project.updatedAt).getTime() !==
-                          new Date(project.createdAt).getTime() && (
-                          <>
-                            <span className="ml-1 italic">(Edited)</span>
-                          </>
-                        )}
-                    </p>
-                  </div>
+
+                  {/* UPVOTE BUTTON - Desktop */}
+                  <button
+                    onClick={handleUpvote}
+                    disabled={isUpvoting}
+                    className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer ${
+                      upvoted
+                        ? "bg-red-100 text-red-600 hover:bg-red-200"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    } ${isUpvoting ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <Heart
+                      className={`w-5 h-5 transition-all ${
+                        upvoted ? "fill-current" : ""
+                      }`}
+                    />
+                    <span className="font-semibold">{upvoteCount}</span>
+                  </button>
                 </div>
 
                 <h1 className="text-3xl font-bold mb-2 break-words">
@@ -162,9 +248,9 @@ const ViewProject = () => {
                   </span>
                 </div>
 
-                {/* TAGGED USERS - Now INSIDE the border section */}
+                {/* TAGGED USERS */}
                 {project.taggedUsers && project.taggedUsers.length > 0 && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-3">
                     <svg
                       className="w-4 h-4 text-gray-500"
                       fill="currentColor"
@@ -194,6 +280,24 @@ const ViewProject = () => {
                     </span>
                   </div>
                 )}
+
+                {/* UPVOTE BUTTON - Mobile */}
+                <button
+                  onClick={handleUpvote}
+                  disabled={isUpvoting}
+                  className={`sm:hidden flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 w-full justify-center cursor-pointer ${
+                    upvoted
+                      ? "bg-red-100 text-red-600 hover:bg-red-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  } ${isUpvoting ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  <Heart
+                    className={`w-5 h-5 transition-all ${
+                      upvoted ? "fill-current" : ""
+                    }`}
+                  />
+                  <span className="font-semibold">{upvoteCount}</span>
+                </button>
               </div>
 
               {/* MEDIA PREVIEW */}

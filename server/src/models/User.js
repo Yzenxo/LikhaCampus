@@ -8,10 +8,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      match: [
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-        "Invalid email",
-      ],
+      match: [/^rc\.[a-z]+\.[a-z]+@cvsu\.edu\.ph$/, "Invalid email"],
     },
     studentNumber: { type: String, required: true, unique: true, minLength: 9 },
     yearLevel: {
@@ -55,6 +52,37 @@ const UserSchema = new mongoose.Schema(
     headerImage: {
       url: { type: String },
       publicId: { type: String },
+    },
+    achievements: {
+      featuredArtist: [
+        {
+          week: Number,
+          year: Number,
+          startDate: Date,
+          endDate: Date,
+          awardedAt: { type: Date, default: Date.now },
+        },
+      ],
+      topWeekArtists: [
+        {
+          rank: Number,
+          totalUpvotes: Number,
+          projectCount: Number,
+          startDate: Date,
+          endDate: Date,
+          awardedAt: { type: Date, default: Date.now },
+        },
+      ],
+      topMonthArtists: [
+        {
+          rank: Number,
+          totalUpvotes: Number,
+          projectCount: Number,
+          startDate: Date,
+          endDate: Date,
+          awardedAt: { type: Date, default: Date.now },
+        },
+      ],
     },
 
     role: { type: String, enum: ["user", "admin"], default: "user" },

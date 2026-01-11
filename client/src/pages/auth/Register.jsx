@@ -292,11 +292,11 @@ const Register = () => {
                       className={`w-full px-3 py-1.5 text-sm rounded-lg border ${
                         errors.email ? "border-red-500" : "border-gray-300"
                       } focus:ring-2 focus:ring-primary focus:outline-none`}
-                      placeholder="juan@example.com"
+                      placeholder="rc.juan.delacruz@cvsu.edu.ph"
                       {...register("email", {
                         required: "Required",
                         pattern: {
-                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          value: /^rc\.[a-z]+\.[a-z]+@cvsu\.edu\.ph$/,
                           message: "Invalid email",
                         },
                       })}

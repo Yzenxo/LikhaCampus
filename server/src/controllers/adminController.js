@@ -545,6 +545,92 @@ export const updateUserRole = async (req, res) => {
   }
 };
 
+// ===== GET STUDENT PROFILES BY SKILL/CATEGORY =====
+export const getStudentProfiles = async (req, res) => {
+  try {
+    const { skill, category } = req.query;
+
+    // Build the project filter
+    const projectFilter = {
+      isArchived: false,
+      "moderation.status": "active",
+    };
+
+    if (skill) projectFilter.skill = skill;
+    if (category) projectFilter.category = category;
+
+    // Get all projects matching the filter
+    const projects = await Project.find(projectFilter)
+      .populate("author", "firstName lastName username avatar email role")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Group projects by author
+    const userProjectsMap = {};
+
+    projects.forEach((project) => {
+      const authorId = project.author._id.toString();
+
+      if (!userProjectsMap[authorId]) {
+        userProjectsMap[authorId] = {
+          user: project.author,
+          projects: [],
+          totalProjects: 0,
+        };
+      }
+
+      userProjectsMap[authorId].projects.push({
+        _id: project._id,
+        title: project.title,
+        description: project.description,
+        skill: project.skill,
+        category: project.category,
+        thumbnail: project.thumbnail,
+        images: project.images,
+        upvoteCount: project.upvoteCount,
+        createdAt: project.createdAt,
+      });
+
+      userProjectsMap[authorId].totalProjects++;
+    });
+
+    // Convert to array and sort by project count
+    const studentProfiles = Object.values(userProjectsMap).sort(
+      (a, b) => b.totalProjects - a.totalProjects
+    );
+
+    // Get available skills and categories for filters
+    const availableSkills = await Project.distinct("skill", {
+      isArchived: false,
+      "moderation.status": "active",
+    });
+
+    const availableCategories = skill
+      ? await Project.distinct("category", {
+          isArchived: false,
+          "moderation.status": "active",
+          skill: skill,
+        })
+      : await Project.distinct("category", {
+          isArchived: false,
+          "moderation.status": "active",
+        });
+
+    res.json({
+      studentProfiles,
+      totalStudents: studentProfiles.length,
+      totalProjects: projects.length,
+      filters: {
+        availableSkills: availableSkills.sort(),
+        availableCategories: availableCategories.sort(),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching student profiles:", error);
+    res.status(500).json({ error: "Failed to fetch student profiles" });
+  }
+};
+
 // ===== GET REPORTED USERS (OPTIMIZED) =====
 export const getReportedUsers = async (req, res) => {
   try {

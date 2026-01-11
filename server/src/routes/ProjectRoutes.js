@@ -10,10 +10,12 @@ import {
   getProjects,
   getReportedProjects,
   getTaggedProjects,
+  getUpvoteStatus,
   getUserProjects,
   reportProject,
   restoreProject,
   restoreReportedProject,
+  toggleUpvote,
   uploadProject,
 } from "../controllers/projectController.js";
 import { requireAdmin, requireAuth } from "../middleware/authMiddleware.js";
@@ -44,7 +46,12 @@ router.get("/admin/reported", requireAdmin, getReportedProjects);
 router.post("/admin/:projectId/restore", requireAdmin, restoreReportedProject);
 router.delete("/admin/:projectId/delete", requireAdmin, deleteReportedProject);
 
+// Public upvote status (can be accessed without auth)
+router.get("/:projectId/upvote-status", getUpvoteStatus);
+
 router.use(requireAuth);
+
+router.post("/:projectId/upvote", toggleUpvote);
 router.post("/:projectId/report", reportProject);
 
 router.post("/", extractTaggedUsers, upload.array("files", 4), uploadProject);

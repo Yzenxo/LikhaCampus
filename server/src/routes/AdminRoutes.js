@@ -7,6 +7,7 @@ import {
   getReportedUsers,
   getReportStats,
   getSemesterSettings,
+  getStudentProfiles,
   takeActionOnUser,
   unbanUser,
   unsuspendUser,
@@ -24,6 +25,7 @@ router.get("/stats", getDashboardStats);
 router.get("/report-stats", getReportStats);
 router.get("/projects", getAllProjects);
 router.get("/users", getAllUsers);
+router.get("/student-profiles", getStudentProfiles);
 router.patch("/users/:userId/role", updateUserRole);
 router.put("/settings/semester", updateSemesterSettings);
 router.get("/reported-users", getReportedUsers);

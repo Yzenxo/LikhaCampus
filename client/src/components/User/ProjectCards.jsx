@@ -1,4 +1,5 @@
-import { Play } from "lucide-react";
+import axios from "axios";
+import { Heart, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import defaultAvatar from "../../assets/default_avatar.jpg";
@@ -53,6 +54,9 @@ const ProjectCard = ({
   const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [localProject, setLocalProject] = useState(project);
+  const [upvoted, setUpvoted] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState(project.upvoteCount || 0);
+  const [isUpvoting, setIsUpvoting] = useState(false);
 
   const getVideoThumbnail = (videoUrl) => {
     if (!videoUrl) return null;
@@ -68,7 +72,67 @@ const ProjectCard = ({
 
   useEffect(() => {
     setLocalProject(project);
+    setUpvoteCount(project.upvoteCount || 0);
   }, [project]);
+
+  // Fetch upvote status on mount
+  useEffect(() => {
+    const fetchUpvoteStatus = async () => {
+      if (!currentUser) return;
+
+      try {
+        const response = await axios.get(
+          `/projects/${localProject._id}/upvote-status`,
+          { withCredentials: true }
+        );
+        setUpvoted(response.data.upvoted);
+        setUpvoteCount(response.data.upvoteCount);
+      } catch (error) {
+        console.error("Error fetching upvote status:", error);
+      }
+    };
+
+    fetchUpvoteStatus();
+  }, [localProject._id, currentUser]);
+
+  const handleUpvote = async (e) => {
+    e.stopPropagation();
+
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+
+    if (isUpvoting) return;
+
+    setIsUpvoting(true);
+
+    // Optimistic UI update
+    const previousUpvoted = upvoted;
+    const previousCount = upvoteCount;
+
+    setUpvoted(!upvoted);
+    setUpvoteCount(upvoted ? upvoteCount - 1 : upvoteCount + 1);
+
+    try {
+      const response = await axios.post(
+        `/projects/${localProject._id}/upvote`,
+        {},
+        { withCredentials: true }
+      );
+
+      // Update with server response
+      setUpvoted(response.data.upvoted);
+      setUpvoteCount(response.data.upvoteCount);
+    } catch (error) {
+      console.error("Error toggling upvote:", error);
+      // Revert on error
+      setUpvoted(previousUpvoted);
+      setUpvoteCount(previousCount);
+    } finally {
+      setIsUpvoting(false);
+    }
+  };
 
   const author = localProject.author || {
     firstName: "Unknown",
@@ -92,10 +156,6 @@ const ProjectCard = ({
 
   const isVideo =
     localProject.videos?.length > 0 && !localProject.images?.length;
-
-  const handleImageError = (e) => {
-    e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
-  };
 
   const handleCardClick = (e) => {
     if (e.target.closest("button") || e.target.closest("a")) {
@@ -239,7 +299,7 @@ const ProjectCard = ({
             {localProject.description}
           </p>
 
-          {/* TAGGED USERS - UPDATE */}
+          {/* TAGGED USERS */}
           {localProject.taggedUsers && localProject.taggedUsers.length > 0 && (
             <div className="flex items-center gap-2 mb-3">
               <svg
@@ -275,14 +335,34 @@ const ProjectCard = ({
             </div>
           )}
 
-          {/* SKILL & CATEGORY BADGES */}
-          <div className="flex flex-wrap gap-2">
-            <span className="badge bg-royal-blue text-white badge-sm">
-              {localProject.skill}
-            </span>
-            <span className="badge bg-yellow badge-sm">
-              {localProject.category}
-            </span>{" "}
+          {/* SKILL & CATEGORY BADGES + UPVOTE BUTTON */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-wrap gap-2">
+              <span className="badge bg-royal-blue text-white badge-sm">
+                {localProject.skill}
+              </span>
+              <span className="badge bg-yellow badge-sm">
+                {localProject.category}
+              </span>
+            </div>
+
+            {/* UPVOTE BUTTON */}
+            <button
+              onClick={handleUpvote}
+              disabled={isUpvoting}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                upvoted
+                  ? "bg-red-100 text-red-600 hover:bg-red-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              } ${isUpvoting ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <Heart
+                className={`w-4 h-4 transition-all ${
+                  upvoted ? "fill-current" : ""
+                }`}
+              />
+              <span className="text-sm font-semibold">{upvoteCount}</span>
+            </button>
           </div>
         </div>
       </div>

@@ -120,7 +120,7 @@ const NotificationDropdown = () => {
 
     return () => {
       if (eventSourceRef.current) {
-        console.log("📡 Closing notification stream");
+        console.log("Closing notification stream");
         eventSourceRef.current.close();
       }
       if (reconnectTimeoutRef.current) {
@@ -189,6 +189,10 @@ const NotificationDropdown = () => {
         return "/home#featured-artist";
 
       case "upvote":
+        // Handle both forum posts and projects
+        if (notification.targetType === "Project") {
+          return `/projects/${notification.targetId}`;
+        }
         if (
           notification.targetType === "Post" ||
           notification.targetType === "ForumPost"
@@ -217,7 +221,7 @@ const NotificationDropdown = () => {
 
       case "project_tag":
         if (notification.targetType === "Project") {
-          return `/projects#project-${notification.targetId}`;
+          return `/projects/${notification.targetId}`;
         }
         return "/projects";
 
@@ -276,7 +280,44 @@ const NotificationDropdown = () => {
     return "Just now";
   };
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = (type, targetType) => {
+    // Handle upvote notifications with different icons based on target type
+    if (type === "upvote") {
+      if (targetType === "Project") {
+        return (
+          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-red-600"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+            >
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </div>
+        );
+      }
+      // Default upvote icon for forum posts
+      return (
+        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-orange-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 15l7-7 7 7"
+            />
+          </svg>
+        </div>
+      );
+    }
+
     switch (type) {
       case "announcement":
         return (
@@ -307,6 +348,25 @@ const NotificationDropdown = () => {
               fill="currentColor"
             >
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          </div>
+        );
+      case "project_tag":
+        return (
+          <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-purple-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+              />
             </svg>
           </div>
         );
@@ -400,7 +460,7 @@ const NotificationDropdown = () => {
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
-            {/* Connection status indicator */}
+            {/* CONNECTION STATUS INDICATOR */}
             {!isConnected && (
               <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-warning animate-pulse" />
             )}
@@ -455,8 +515,18 @@ const NotificationDropdown = () => {
                   >
                     <div className="flex gap-3">
                       {/* AVATAR OR ICON */}
-                      {notification.type === "announcement" ? (
-                        getNotificationIcon("announcement")
+                      {notification.type === "announcement" ||
+                      notification.type === "featured_artist" ||
+                      notification.type === "project_reported" ||
+                      notification.type === "project_restored" ||
+                      notification.type === "project_deleted" ||
+                      notification.type === "project_tag" ||
+                      (notification.type === "upvote" &&
+                        notification.targetType === "Project") ? (
+                        getNotificationIcon(
+                          notification.type,
+                          notification.targetType
+                        )
                       ) : notification.sender ? (
                         <img
                           src={

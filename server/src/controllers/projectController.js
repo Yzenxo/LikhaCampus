@@ -226,6 +226,97 @@ export const getProjectById = async (req, res) => {
   }
 };
 
+// ===== TOGGLE UPVOTE ON PROJECT =====
+export const toggleUpvote = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.session?.userId || req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const project = await Project.findById(projectId).populate(
+      "author",
+      "firstName lastName username"
+    );
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // Check if project is active
+    if (project.moderation?.status !== "active") {
+      return res.status(403).json({ error: "Cannot upvote this project" });
+    }
+
+    const hasUpvoted = project.upvotes.includes(userId);
+
+    if (hasUpvoted) {
+      // Remove upvote
+      project.upvotes = project.upvotes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
+      project.upvoteCount = Math.max(0, project.upvoteCount - 1);
+    } else {
+      // Add upvote
+      project.upvotes.push(userId);
+      project.upvoteCount += 1;
+
+      // Create notification for project owner (only when upvoting, not when removing)
+      if (project.author._id.toString() !== userId.toString()) {
+        await createNotification({
+          recipient: project.author._id,
+          sender: userId,
+          type: "upvote",
+          targetType: "Project",
+          targetId: project._id,
+          message: "upvoted your project",
+        });
+      }
+    }
+
+    await project.save();
+
+    return res.status(200).json({
+      message: hasUpvoted
+        ? "Upvote removed successfully"
+        : "Project upvoted successfully",
+      upvoted: !hasUpvoted,
+      upvoteCount: project.upvoteCount,
+    });
+  } catch (error) {
+    console.error("Error toggling upvote:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// ===== GET PROJECT UPVOTE STATUS =====
+export const getUpvoteStatus = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.session?.userId || req.user?._id;
+
+    const project = await Project.findById(projectId).select(
+      "upvotes upvoteCount"
+    );
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const hasUpvoted = userId ? project.upvotes.includes(userId) : false;
+
+    return res.status(200).json({
+      upvoted: hasUpvoted,
+      upvoteCount: project.upvoteCount,
+    });
+  } catch (error) {
+    console.error("Error getting upvote status:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 // ===== REPORT PROJECT =====
 export const reportProject = async (req, res) => {
   try {

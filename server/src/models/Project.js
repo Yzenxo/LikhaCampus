@@ -17,6 +17,16 @@ const ProjectSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    upvotes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    upvoteCount: {
+      type: Number,
+      default: 0,
+    },
     isArchived: {
       type: Boolean,
       default: false,
@@ -64,5 +74,7 @@ const ProjectSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+ProjectSchema.index({ upvoteCount: -1, createdAt: -1 });
 
 export default mongoose.model("Project", ProjectSchema);

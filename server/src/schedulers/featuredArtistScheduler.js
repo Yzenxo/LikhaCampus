@@ -1,75 +1,125 @@
 import cron from "node-cron";
 import {
-  getCurrentFeaturedArtist,
-  selectFeaturedArtist,
+  createTopArtistsSnapshot,
+  getTopArtistsByUpvotes,
 } from "../services/featuredArtistService.js";
 
 /**
- * Initialize featured artist on server startup
+ * Initialize featured artists on server startup
  */
-const initializeFeaturedArtist = async () => {
+const initializeFeaturedArtists = async () => {
   try {
-    // First check if there's a current featured artist
-    let currentFeatured = await getCurrentFeaturedArtist();
+    console.log("\n🎨 Initializing Featured Artists System...");
 
-    if (!currentFeatured) {
-      // No featured artist for current period, select one now
-      console.log(
-        "No featured artist found for current week, selecting one now..."
-      );
-      currentFeatured = await selectFeaturedArtist();
+    // Check if we have current snapshots, if not create them
+    const topWeekly = await getTopArtistsByUpvotes("week");
+    const topMonthly = await getTopArtistsByUpvotes("month");
 
-      if (currentFeatured) {
+    if (topWeekly && topWeekly.length > 0) {
+      console.log("\n📊 Current Top Artists (Weekly):");
+      topWeekly.forEach((artist, index) => {
         console.log(
-          `Featured artist selected: ${currentFeatured.user.firstName} ${currentFeatured.user.lastName} (@${currentFeatured.user.username})`
+          `  ${index + 1}. ${artist.user.firstName} ${artist.user.lastName} (@${artist.user.username}) - ${artist.totalUpvotes} upvotes, ${artist.projectCount} projects`
         );
-      } else {
-        console.log("No eligible artist found");
-      }
+      });
     } else {
-      console.log(
-        `Current featured artist: ${currentFeatured.user.firstName} ${currentFeatured.user.lastName} (@${currentFeatured.user.username})`
-      );
-      console.log(
-        `Featured until: ${currentFeatured.endDate.toLocaleDateString()}`
-      );
+      console.log("⚠️  No weekly top artists found");
     }
 
-    return currentFeatured;
+    if (topMonthly && topMonthly.length > 0) {
+      console.log("\n📊 Current Top Artists (Monthly):");
+      topMonthly.forEach((artist, index) => {
+        console.log(
+          `  ${index + 1}. ${artist.user.firstName} ${artist.user.lastName} (@${artist.user.username}) - ${artist.totalUpvotes} upvotes, ${artist.projectCount} projects`
+        );
+      });
+    } else {
+      console.log("⚠️  No monthly top artists found");
+    }
+
+    return { topWeekly, topMonthly };
   } catch (error) {
-    console.error("Error initializing featured artist:", error);
+    console.error("❌ Error initializing featured artists:", error);
     return null;
   }
 };
 
 /**
- * Schedule featured artist selection
- * Runs every Monday at 00:00 (midnight)
+ * Schedule featured artist updates
  */
 export const scheduleFeaturedArtistSelection = () => {
-  // Initialize on startup (check for current or select new)
-  initializeFeaturedArtist();
+  // Initialize on startup
+  initializeFeaturedArtists();
 
-  // Schedule weekly selection every Monday at midnight
-  cron.schedule("0 0 * * 1", async () => {
-    console.log("Running weekly featured artist selection...");
+  // ===== WEEKLY SNAPSHOT: Every Monday at 00:01 (12:01 AM) =====
+  cron.schedule("1 0 * * 1", async () => {
+    console.log("\n⏰ Running WEEKLY Top 3 Artists snapshot...");
 
     try {
-      const featuredArtist = await selectFeaturedArtist();
+      const snapshot = await createTopArtistsSnapshot("week");
 
-      if (featuredArtist) {
-        console.log(
-          `Featured artist selected: ${featuredArtist.user.firstName} ${featuredArtist.user.lastName} (@${featuredArtist.user.username})`
-        );
+      if (snapshot && snapshot.rankings.length > 0) {
+        console.log("✅ Weekly Top 3 snapshot created:");
+        snapshot.rankings.forEach((ranking) => {
+          console.log(
+            `  ${ranking.rank}. ${ranking.user.firstName} ${ranking.user.lastName} (@${ranking.user.username}) - ${ranking.totalUpvotes} upvotes`
+          );
+        });
       } else {
-        console.log("No eligible artist found for this week");
+        console.log("⚠️  No artists found for weekly snapshot");
       }
     } catch (error) {
-      console.error("Error in featured artist cron job:", error);
+      console.error("❌ Error in weekly snapshot cron job:", error);
+    }
+  });
+
+  // ===== MONTHLY SNAPSHOT: 1st of every month at 00:02 (12:02 AM) =====
+  cron.schedule("2 0 1 * *", async () => {
+    console.log("\n⏰ Running MONTHLY Top 3 Artists snapshot...");
+
+    try {
+      const snapshot = await createTopArtistsSnapshot("month");
+
+      if (snapshot && snapshot.rankings.length > 0) {
+        console.log("✅ Monthly Top 3 snapshot created:");
+        snapshot.rankings.forEach((ranking) => {
+          console.log(
+            `  ${ranking.rank}. ${ranking.user.firstName} ${ranking.user.lastName} (@${ranking.user.username}) - ${ranking.totalUpvotes} upvotes`
+          );
+        });
+      } else {
+        console.log("⚠️  No artists found for monthly snapshot");
+      }
+    } catch (error) {
+      console.error("❌ Error in monthly snapshot cron job:", error);
     }
   });
 
   console.log(
-    "Featured Artist scheduler initialized (runs every Monday at midnight)"
+    "✅ Featured Artist scheduler initialized:\n" +
+      "   📅 Weekly snapshots: Every Monday at 12:01 AM\n" +
+      "   📅 Monthly snapshots: 1st of month at 12:02 AM"
   );
+};
+
+/**
+ * Manual trigger function (for testing or admin use)
+ */
+export const triggerSnapshotNow = async (timeframe = "week") => {
+  console.log(`\n🚀 Manually triggering ${timeframe} snapshot...`);
+
+  try {
+    const snapshot = await createTopArtistsSnapshot(timeframe);
+
+    if (snapshot) {
+      console.log(`✅ ${timeframe} snapshot created successfully`);
+      return snapshot;
+    } else {
+      console.log(`⚠️  No snapshot created`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`❌ Error creating ${timeframe} snapshot:`, error);
+    throw error;
+  }
 };

@@ -230,3 +230,18 @@ export const notifyFeaturedArtist = async (userId, weekStart, weekEnd) => {
     console.error("Error notifying featured artist:", error);
   }
 };
+
+// Add this to notificationService.js
+export const notifyTopArtist = async (userId, rank, timeframe) => {
+  try {
+    const rankEmojis = ["🥇", "🥈", "🥉"];
+
+    return await createNotificationController({
+      recipient: userId,
+      type: "featured_artist",
+      message: `${rankEmojis[rank - 1]} Congratulations! You're ranked #${rank} in Top Artists of the ${timeframe === "week" ? "Week" : "Month"}!`,
+    });
+  } catch (error) {
+    console.error("Error notifying top artist:", error);
+  }
+};

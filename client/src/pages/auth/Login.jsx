@@ -163,7 +163,7 @@ const Login = () => {
                           ? "border-red-500 focus:ring-red-500"
                           : "border-gray-300 focus:ring-primary"
                       } focus:ring-2 focus:outline-none transition`}
-                      placeholder="you@example.com"
+                      placeholder="rc.example.example@cvsu.edu.ph"
                       {...register("email", {
                         required: "Email is required",
                         pattern: {

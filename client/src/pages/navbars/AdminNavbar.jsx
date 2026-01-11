@@ -3,6 +3,7 @@ import {
   BarChart2,
   Folder,
   FolderX,
+  ListFilterPlus,
   LogOut,
   Megaphone,
   Menu,
@@ -13,6 +14,7 @@ import {
   UserPen,
   UserRoundX,
   Users,
+  UserSearch,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -42,6 +44,11 @@ const AdminNavbar = () => {
       path: "/admin/guidelines",
     },
     {
+      name: "Category Request Panel",
+      icon: <ListFilterPlus size={18} />,
+      path: "/admin/category-request",
+    },
+    {
       name: "Uploaded Projects",
       icon: <Folder size={18} />,
       path: "/admin/projects",
@@ -55,6 +62,11 @@ const AdminNavbar = () => {
       name: "User Contributions",
       icon: <Users size={18} />,
       path: "/admin/user-contributions",
+    },
+    {
+      name: "Student Profile Panel",
+      icon: <UserSearch size={18} />,
+      path: "/admin/student-profile",
     },
     {
       name: "Semester Settings",

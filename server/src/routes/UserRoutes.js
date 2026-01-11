@@ -11,6 +11,7 @@ import {
 import {
   deactivateAccount,
   deleteAccountPermanently,
+  getUserById,
   reactivateAccount,
   reportUser,
 } from "../controllers/userController.js";
@@ -45,12 +46,14 @@ router.get("/me", async (req, res) => {
   }
 });
 
+router.get("/search", searchUsers);
+router.get("/profile", getCurrentProfile);
 router.get("/profile/:username", getProfileByUsername);
 
+router.get("/id/:userId", getUserById);
+
 router.use(requireAuth);
-router.get("/search", searchUsers);
-router.post("/:userId/report", requireAuth, reportUser);
-router.get("/profile", getCurrentProfile);
+router.post("/:userId/report", reportUser);
 router.patch("/profile", updateProfile);
 router.patch(
   "/settings",
@@ -67,6 +70,7 @@ router.put(
 router.put("/change-password", changePassword);
 router.post("/account/deactivate", requireAuth, deactivateAccount);
 router.post("/account/reactivate", reactivateAccount);
+
 router.delete("/account/delete", requireAuth, deleteAccountPermanently);
 
 export default router;

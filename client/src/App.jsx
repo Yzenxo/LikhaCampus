@@ -45,8 +45,14 @@ const ViewProject = lazy(() => import("./pages/users/ViewProject.jsx"));
 const AnnouncementPanel = lazy(
   () => import("./pages/admin/AnnouncementPanel.jsx")
 );
+const CategoryRequestPanel = lazy(
+  () => import("./pages/admin/CategoryRequestPanel.jsx")
+);
 const CommunityGuidelines = lazy(
   () => import("./pages/admin/CommunityGuidelines.jsx")
+);
+const StudentProfilePanel = lazy(
+  () => import("./pages/admin/StudentProfilePanel.jsx")
 );
 const ExcelUploadPanel = lazy(
   () => import("./pages/admin/ExcelUploadPanel.jsx")
@@ -216,13 +222,19 @@ export default function App() {
               <Route path="reports" element={<Reports />} />
               <Route path="announcements" element={<AnnouncementPanel />} />
               <Route
+                path="category-request"
+                element={<CategoryRequestPanel />}
+              />
+              <Route path="guidelines" element={<CommunityGuidelines />} />
+              <Route path="student-profile" element={<StudentProfilePanel />} />
+              <Route
                 path="project-violations"
                 element={<ProjectViolations />}
               />
               <Route path="user-violations" element={<UserViolations />} />
               <Route path="projects" element={<UploadedProjects />} />
               <Route path="forum-violations" element={<ForumViolations />} />
-              <Route path="guidelines" element={<CommunityGuidelines />} />
+
               <Route path="user-roles" element={<UserRoleManagement />} />
               <Route
                 path="user-contributions"

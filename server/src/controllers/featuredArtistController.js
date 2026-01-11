@@ -1,8 +1,41 @@
 import {
   getCurrentFeaturedArtist,
   getFeaturedArtistHistory,
+  getTopArtistsByUpvotes,
   selectFeaturedArtist,
 } from "../services/featuredArtistService.js";
+
+// ===== GET TOP 3 ARTISTS OF THE WEEK =====
+export const getTopWeekly = async (req, res) => {
+  try {
+    const topArtists = await getTopArtistsByUpvotes("week");
+
+    res.json({
+      topArtists,
+      timeframe: "week",
+      description: "Top 3 artists based on upvotes in the last 7 days",
+    });
+  } catch (error) {
+    console.error("Error fetching top weekly artists:", error);
+    res.status(500).json({ error: "Failed to fetch top weekly artists" });
+  }
+};
+
+// ===== GET TOP 3 ARTISTS OF THE MONTH =====
+export const getTopMonthly = async (req, res) => {
+  try {
+    const topArtists = await getTopArtistsByUpvotes("month");
+
+    res.json({
+      topArtists,
+      timeframe: "month",
+      description: "Top 3 artists based on upvotes in the last 30 days",
+    });
+  } catch (error) {
+    console.error("Error fetching top monthly artists:", error);
+    res.status(500).json({ error: "Failed to fetch top monthly artists" });
+  }
+};
 
 // ===== GET CURRENT FEATURED ARTIST =====
 export const getCurrent = async (req, res) => {
@@ -117,5 +150,38 @@ export const manualSelect = async (req, res) => {
   } catch (error) {
     console.error("Error manually selecting featured artist:", error);
     res.status(500).json({ error: "Failed to select featured artist" });
+  }
+};
+
+// ===== ADMIN: MANUALLY CREATE SNAPSHOT =====
+export const createSnapshot = async (req, res) => {
+  try {
+    const { timeframe } = req.body; // "week" or "month"
+
+    if (!timeframe || !["week", "month"].includes(timeframe)) {
+      return res.status(400).json({
+        error: "Invalid timeframe. Use 'week' or 'month'",
+      });
+    }
+
+    const snapshot = await createTopArtistsSnapshot(timeframe);
+
+    if (!snapshot) {
+      return res.status(404).json({
+        message: `No artists found for ${timeframe} snapshot`,
+      });
+    }
+
+    res.json({
+      message: `${timeframe} snapshot created successfully`,
+      snapshot: {
+        timeframe: snapshot.timeframe,
+        period: snapshot.period,
+        rankings: snapshot.rankings,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating snapshot:", error);
+    res.status(500).json({ error: "Failed to create snapshot" });
   }
 };

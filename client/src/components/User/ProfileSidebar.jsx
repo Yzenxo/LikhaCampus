@@ -1,3 +1,13 @@
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 const ProfileSidebar = ({
   assessment,
   projects = [],
@@ -10,35 +20,31 @@ const ProfileSidebar = ({
         {/* SKILLS ASSESSMENT CARD */}
         {assessment ? (
           <div className="card shadow-md bg-base-100 p-4">
-            <h3 className="font-bold text-lg mb-3">Skills</h3>
-            <div className="space-y-2 text-sm">
-              <p className="flex justify-between">
-                <span>Learning:</span>
-                <span className="font-bold text-primary">
-                  {assessment.scores.learningSkills}/5
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span>Literacy:</span>
-                <span className="font-bold text-primary">
-                  {assessment.scores.literacySkills}/5
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span>Life:</span>
-                <span className="font-bold text-primary">
-                  {assessment.scores.lifeSkills}/5
-                </span>
-              </p>
-              <p className="flex justify-between">
-                <span>Tech:</span>
-                <span className="font-bold text-primary">
-                  {assessment.scores.technologySkills}/5
-                </span>
-              </p>
-              <div className="divider my-1"></div>
-              <p className="flex justify-between font-bold text-lg">
-                <span>Overall:</span>
+            <h3 className="font-bold text-lg mb-3">Skills Assessment</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart
+                data={[
+                  { name: "Learning", score: assessment.scores.learningSkills },
+                  { name: "Literacy", score: assessment.scores.literacySkills },
+                  { name: "Life", score: assessment.scores.lifeSkills },
+                  { name: "Tech", score: assessment.scores.technologySkills },
+                ]}
+                margin={{ top: 10, right: 10, bottom: 10, left: -20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis
+                  domain={[0, 5]}
+                  ticks={[0, 1, 2, 3, 4, 5]}
+                  tick={{ fontSize: 12 }}
+                />
+                <Tooltip />
+                <Bar dataKey="score" fill="#570df8" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="text-center mt-2">
+              <p className="font-bold text-lg">
+                Overall:{" "}
                 <span className="text-primary">
                   {assessment.overallScore}/5
                 </span>
@@ -47,7 +53,7 @@ const ProfileSidebar = ({
           </div>
         ) : null}
 
-        {/* STUEDNT INFORMATION CARD */}
+        {/* STUDENT INFORMATION CARD */}
         <div className="card shadow-md bg-base-100 p-4">
           <h3 className="font-bold text-lg mb-3">Information</h3>
           <div className="space-y-2 text-sm">
