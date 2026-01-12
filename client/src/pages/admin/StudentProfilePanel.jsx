@@ -1,14 +1,5 @@
 import axios from "axios";
-import {
-  Award,
-  Eye,
-  Folder,
-  Target,
-  TrendingUp,
-  Trophy,
-  Users,
-  X,
-} from "lucide-react";
+import { Award, Eye, Folder, TrendingUp, Trophy, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAlert } from "../../hooks/useAlert";
 
@@ -198,7 +189,7 @@ const StudentProfilePanel = () => {
           <div className="card bg-base-100 shadow">
             <div className="card-body p-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold">Filter Students</h3>
+                <h3 className="font-semibold">Filter by Skill & Category</h3>
                 {(filterSkill || filterCategory || filterExpertise) && (
                   <button
                     className="btn btn-sm btn-ghost gap-2"
@@ -210,7 +201,7 @@ const StudentProfilePanel = () => {
                 )}
               </div>
 
-              <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="w-full flex flex-col md:flex-row gap-3">
                 {/* SKILL LEVEL SELECT (Beginner/Intermediate/Advanced) */}
                 <select
                   className="select select-primary"
@@ -229,19 +220,20 @@ const StudentProfilePanel = () => {
                 </select>
 
                 {/* CATEGORY SELECT (Arts/Photography/Welding, etc) */}
-                <select
-                  className="select select-secondary"
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  disabled={!filterSkill}
-                >
-                  <option value="">All Categories</option>
-                  {availableCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                {filterSkill && (
+                  <select
+                    className="select select-secondary"
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                  >
+                    <option value="">All Categories</option>
+                    {availableCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                )}
 
                 {/* EXPERTISE FILTER (Master/Expert/Proficient/Developing) */}
                 <select
@@ -261,17 +253,17 @@ const StudentProfilePanel = () => {
                 <div className="flex gap-2 mt-2 flex-wrap">
                   {filterSkill && (
                     <span className="badge badge-primary whitespace-nowrap max-w-max inline-flex items-center px-3">
-                      Skill: {filterSkill}
+                      {filterSkill}
                     </span>
                   )}
                   {filterCategory && (
                     <span className="badge badge-secondary whitespace-nowrap max-w-max inline-flex items-center px-3">
-                      Category: {filterCategory}
+                      {filterCategory}
                     </span>
                   )}
                   {filterExpertise && (
                     <span className="badge badge-accent whitespace-nowrap max-w-max inline-flex items-center px-3">
-                      Expertise: {filterExpertise}
+                      {filterExpertise}
                     </span>
                   )}
                 </div>
@@ -306,162 +298,129 @@ const StudentProfilePanel = () => {
           </div>
         </div>
 
-        {/* STUDENT PROFILES GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProfiles.length === 0 ? (
-            <div className="col-span-full text-center py-8 text-gray-500">
-              {searchTerm || filterSkill || filterCategory || filterExpertise
-                ? "No students found matching your filters"
-                : "No students found"}
-            </div>
-          ) : (
-            filteredProfiles.map((profile) => {
-              const specialty = getStudentSpecialty(profile);
+        {/* STUDENT PROFILES TABLE */}
+        <div className="card bg-base-100 shadow-md overflow-x-auto">
+          <table className="table w-full">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Specialty</th>
+                <th>Projects</th>
+                <th>Avg Upvotes</th>
+                <th>Categories</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProfiles.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center py-8 text-gray-500">
+                    {searchTerm ||
+                    filterSkill ||
+                    filterCategory ||
+                    filterExpertise
+                      ? "No students found matching your filters"
+                      : "No students found"}
+                  </td>
+                </tr>
+              ) : (
+                filteredProfiles.map((profile) => {
+                  const specialty = getStudentSpecialty(profile);
 
-              return (
-                <div
-                  key={profile.user._id}
-                  className="card bg-base-100 shadow-md hover:shadow-xl transition-shadow"
-                >
-                  <div className="card-body">
-                    {/* USER INFO */}
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="avatar">
-                        <div className="w-16 h-16 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                          <img
-                            src={
-                              profile.user.avatar?.url ||
-                              `https://ui-avatars.com/api/?name=${profile.user.firstName}`
-                            }
-                            alt={profile.user.firstName}
-                          />
+                  return (
+                    <tr key={profile.user._id}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="avatar">
+                            <div className="w-12 h-12 rounded-full">
+                              <img
+                                src={
+                                  profile.user.avatar?.url ||
+                                  `https://ui-avatars.com/api/?name=${profile.user.firstName}`
+                                }
+                                alt={profile.user.firstName}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="font-medium">
+                              {profile.user.firstName} {profile.user.lastName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              @{profile.user.username}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg truncate">
-                          {profile.user.firstName} {profile.user.lastName}
-                        </h3>
-                        <p className="text-sm text-gray-500 truncate">
-                          @{profile.user.username}
-                        </p>
-                      </div>
-                    </div>
+                      </td>
 
-                    {/* SPECIALTY IDENTIFICATION LABEL */}
-                    <div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-3 rounded-lg mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-gray-600">
-                          SPECIALTY
-                        </span>
-                        <span className="text-2xl">
-                          {specialty.expertise.icon}
-                        </span>
-                      </div>
-                      <div
-                        className={`badge ${specialty.expertise.color} badge-lg w-full justify-center gap-2 py-3`}
-                      >
-                        <Target size={16} />
-                        <span className="font-bold">{specialty.label}</span>
-                      </div>
-                      <div className="text-xs text-center mt-1 text-gray-600">
-                        in {specialty.primaryCategory}
-                      </div>
-                    </div>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">
+                            {specialty.expertise.icon}
+                          </span>
+                          <div>
+                            <div
+                              className={`badge ${specialty.expertise.color} badge-sm gap-1`}
+                            >
+                              {specialty.expertise.level}
+                            </div>
+                            <div className="text-xs text-gray-600 mt-1">
+                              {specialty.primaryCategory}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
-                    {/* DETAILED STATS */}
-                    <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                      <div className="bg-base-200 p-2 rounded">
-                        <div className="text-xs text-gray-500">
-                          Projects in {specialty.primaryCategory}
+                      <td>
+                        <div className="text-sm">
+                          <div className="font-bold text-primary">
+                            {specialty.projectCount}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            in {specialty.primaryCategory}
+                          </div>
                         </div>
-                        <div className="font-bold text-primary">
-                          {specialty.projectCount}
-                        </div>
-                      </div>
-                      <div className="bg-base-200 p-2 rounded">
-                        <div className="text-xs text-gray-500">
-                          Avg. Upvotes
-                        </div>
+                      </td>
+
+                      <td>
                         <div className="font-bold text-secondary">
                           {specialty.avgUpvotes}
                         </div>
-                      </div>
-                      <div className="bg-base-200 p-2 rounded">
-                        <div className="text-xs text-gray-500">
-                          Total Projects
-                        </div>
-                        <div className="font-bold">{profile.totalProjects}</div>
-                      </div>
-                      <div className="bg-base-200 p-2 rounded">
-                        <div className="text-xs text-gray-500">
-                          Total Upvotes
-                        </div>
-                        <div className="font-bold text-accent">
-                          {specialty.totalUpvotes}
-                        </div>
-                      </div>
-                    </div>
+                      </td>
 
-                    {/* CATEGORIES BADGES */}
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {specialty.allCategories.slice(0, 3).map((cat) => (
-                        <span
-                          key={cat.category}
-                          className="badge badge-sm badge-outline"
-                        >
-                          {cat.category} ({cat.projectCount})
-                        </span>
-                      ))}
-                      {specialty.allCategories.length > 3 && (
-                        <span className="badge badge-sm badge-ghost">
-                          +{specialty.allCategories.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* PROJECT THUMBNAILS */}
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      {profile.projects.slice(0, 3).map((project) => (
-                        <div
-                          key={project._id}
-                          className="aspect-square bg-base-200 rounded overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => handleViewProject(project)}
-                        >
-                          {project.thumbnail ? (
-                            <img
-                              src={project.thumbnail}
-                              alt={project.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <Folder className="text-gray-400" size={24} />
-                            </div>
+                      <td>
+                        <div className="flex flex-wrap gap-1">
+                          {specialty.allCategories.slice(0, 2).map((cat) => (
+                            <span
+                              key={cat.category}
+                              className="badge badge-sm badge-outline"
+                            >
+                              {cat.category} ({cat.projectCount})
+                            </span>
+                          ))}
+                          {specialty.allCategories.length > 2 && (
+                            <span className="badge badge-sm badge-ghost">
+                              +{specialty.allCategories.length - 2}
+                            </span>
                           )}
                         </div>
-                      ))}
-                      {profile.totalProjects > 3 && (
-                        <div className="aspect-square bg-base-200 rounded flex items-center justify-center">
-                          <span className="text-sm font-semibold text-gray-600">
-                            +{profile.totalProjects - 3}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                      </td>
 
-                    {/* VIEW BUTTON */}
-                    <button
-                      className="btn btn-primary btn-sm gap-2 w-full"
-                      onClick={() => handleViewStudent(profile)}
-                    >
-                      <Eye size={16} />
-                      View Full Portfolio
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                      <td>
+                        <button
+                          className="btn btn-sm btn-ghost gap-2"
+                          onClick={() => handleViewStudent(profile)}
+                        >
+                          <Eye size={16} />
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -651,7 +610,9 @@ const StudentProfilePanel = () => {
         <dialog open className="modal modal-open">
           <div className="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="font-bold text-2xl">{selectedProject.title}</h3>
+              <h3 className="font-bold text-2xl break-words whitespace-pre-wrap">
+                {selectedProject.title}
+              </h3>
               <button
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={closeProjectModal}
@@ -693,12 +654,17 @@ const StudentProfilePanel = () => {
                     </div>
                   ))}
                 </div>
+                {selectedProject.images.length > 1 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Swipe / Scroll horizontally to view more images →
+                  </p>
+                )}
               </div>
             )}
 
             <div className="mb-4">
               <h4 className="font-semibold mb-2">Description</h4>
-              <p className="text-sm whitespace-pre-wrap">
+              <p className="text-sm whitespace-pre-wrap break-words">
                 {selectedProject.description}
               </p>
             </div>

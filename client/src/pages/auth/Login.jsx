@@ -163,7 +163,7 @@ const Login = () => {
                           ? "border-red-500 focus:ring-red-500"
                           : "border-gray-300 focus:ring-primary"
                       } focus:ring-2 focus:outline-none transition`}
-                      placeholder="rc.example.example@cvsu.edu.ph"
+                      placeholder="Email address"
                       {...register("email", {
                         required: "Email is required",
                         pattern: {
@@ -206,7 +206,7 @@ const Login = () => {
                           ? "border-red-500 focus:ring-red-500"
                           : "border-gray-300 focus:ring-primary"
                       } focus:ring-2 focus:outline-none transition`}
-                      placeholder="••••••••"
+                      placeholder="Password"
                       {...register("password", {
                         required: "Password is required",
                         minLength: {

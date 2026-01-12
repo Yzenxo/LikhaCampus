@@ -13,7 +13,8 @@ const ForumSortDropdown = ({ sortBy, setSortBy }) => {
             className="select select-primary"
           >
             <option disabled={true}>Sort posts</option>
-            <option value="trending">Popular</option>
+            <option value="this-month">Popular This Month</option>
+            <option value="trending">All-time Trending</option>
             <option value="newest">Most Recent</option>
             <option value="upvotes">Most Upvoted</option>
             <option value="comments">Most Comments</option>

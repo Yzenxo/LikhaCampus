@@ -12,18 +12,36 @@ const SkillDropdown = ({ onSelect }) => {
   const { showAlert } = useAlert();
 
   const skillCategories = {
-    "Critical Thinking": ["Problem Solving", "Research", "Analysis"],
-    Communication: ["Writing", "Public Speaking", "Digital Communication"],
-    Collaboration: ["Group Projects", "Teamwork", "Peer Learning"],
-    Creativity: ["Arts", "Design", "Innovation", "Storytelling"],
-    "Information Literacy": ["Research Papers", "Reports", "Data Handling"],
-    "Media Literacy": ["Journalism", "Multimedia", "Social Media Awareness"],
-    "Technology Literacy": ["Coding", "App Development", "Digital Tools"],
-    Flexibility: ["Adaptability", "Multitasking", "Sports"],
-    Leadership: ["Student Government", "Project Management", "Mentorship"],
-    Initiative: ["Volunteering", "Entrepreneurship", "Independent Projects"],
-    Productivity: ["Time Management", "Goal Setting", "Efficiency Tools"],
-    "Social Skills": ["Networking", "Empathy", "Conflict Resolution"],
+    "Handicrafts & Applied Arts": [
+      "Basic tailoring",
+      "Embroidery & textile work",
+      "Craft-based product creation",
+    ],
+    "Visual Arts": [
+      "Freehand drawing",
+      "Technical drawing",
+      "Poster & banner design",
+    ],
+    "Software & Computing Skills": [
+      "App development",
+      "Mobile development",
+      "Game development",
+    ],
+    "Digital & Multimedia Arts": [
+      "Graphic design",
+      "Photo editing",
+      "Video editing",
+    ],
+    "Craft & Maker Skills": [
+      "Metal fabrication",
+      "Woodworking",
+      "Product prototyping",
+    ],
+    "Performing & Creative Expressions": [
+      "Stage Performance",
+      "Music performance",
+      "Creative writing",
+    ],
     Passion: [
       "Personal Growth",
       "Hobbies",

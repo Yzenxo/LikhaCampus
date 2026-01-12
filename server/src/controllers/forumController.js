@@ -116,6 +116,36 @@ export const getPosts = async (req, res) => {
         });
         break;
 
+      // ===== NEW: POPULAR THIS MONTH =====
+      case "this-month":
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        posts = await ForumPost.aggregate([
+          {
+            $match: {
+              ...moderationFilter,
+              createdAt: { $gte: thirtyDaysAgo }, // Only posts from last 30 days
+            },
+          },
+          {
+            $addFields: {
+              popularityScore: {
+                $add: [{ $multiply: ["$upvoteCount", 2] }, "$commentCount"],
+              },
+            },
+          },
+          { $sort: { popularityScore: -1, createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+        ]);
+
+        await ForumPost.populate(posts, {
+          path: "author",
+          select: "firstName lastName avatar username",
+        });
+        break;
+
       case "upvotes":
         sortQuery = { upvoteCount: -1, createdAt: -1 };
         posts = await ForumPost.find(moderationFilter)
