@@ -63,7 +63,9 @@ const UserContributions = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg">
+          Loading user contributions...
+        </span>
       </div>
     );
   }

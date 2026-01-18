@@ -140,8 +140,10 @@ export default function App() {
   }, [location.pathname, navigate]);
 
   const LoadingFallback = () => (
-    <div className="flex items-center justify-center min-h-screen">
-      <span className="loading loading-spinner loading-lg text-primary"></span>
+    <div className="container mx-auto p-6">
+      <div className="text-center py-8">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
     </div>
   );
 

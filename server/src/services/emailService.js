@@ -23,7 +23,7 @@ export const sendVerificationEmail = async (email, firstName, token) => {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background: #00017a; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .button { display: inline-block; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+            .button { display: inline-block; padding: 15px 30px; background-color: #00017a; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
           </style>
         </head>
@@ -110,7 +110,7 @@ export const sendWarningEmail = async (
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header { background: #00017a; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }S
         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
         .warning-box { background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 20px; margin: 20px 0; border-radius: 5px; }
         .warning-count { background: #ff6b6b; color: white; padding: 10px 20px; border-radius: 20px; display: inline-block; font-weight: bold; margin: 10px 0; }

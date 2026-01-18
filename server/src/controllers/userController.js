@@ -43,10 +43,11 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const expectedEmail = `rc.${firstName.toLowerCase().trim()}.${lastName.toLowerCase().trim()}@cvsu.edu.ph`;
-    if (email.toLowerCase().trim() !== expectedEmail) {
+    const cvsuEmailPattern = /^rc\.[a-z.-]+\.[a-z.-]+@cvsu\.edu\.ph$/i;
+    if (!cvsuEmailPattern.test(email.toLowerCase().trim())) {
       return res.status(400).json({
-        message: `Invalid email format`,
+        message:
+          "Email must be a valid CVSU email (format: rc.firstname.lastname@cvsu.edu.ph)",
       });
     }
 
@@ -69,7 +70,7 @@ export const registerUser = async (req, res) => {
 
     console.log("Extracting information from registration form...");
     const pdfExtraction = await extractRegistrationFormInfo(
-      registrationForm.path
+      registrationForm.path,
     );
 
     if (!pdfExtraction.success) {
@@ -207,7 +208,7 @@ export const registerUser = async (req, res) => {
     const emailResult = await sendVerificationEmail(
       email,
       firstName,
-      emailVerificationToken
+      emailVerificationToken,
     );
 
     if (!emailResult.success) {
@@ -281,7 +282,7 @@ export const loginUser = async (req, res) => {
       const now = new Date();
       const suspensionEnd = new Date(user.suspensionDate);
       suspensionEnd.setHours(
-        suspensionEnd.getHours() + user.suspensionDuration
+        suspensionEnd.getHours() + user.suspensionDuration,
       );
 
       if (now >= suspensionEnd) {
@@ -375,7 +376,7 @@ export const getPublicProfile = async (req, res) => {
       username: new RegExp(`^${username}$`, "i"),
       isDeactivated: false,
     }).select(
-      "-password -email -studentNumber -registrationFormPath -emailVerificationToken -loginAttempts -lockUntil -lockCount -emailVerificationExpires -resetPasswordToken -resetPasswordExpires"
+      "-password -email -studentNumber -registrationFormPath -emailVerificationToken -loginAttempts -lockUntil -lockCount -emailVerificationExpires -resetPasswordToken -resetPasswordExpires",
     );
 
     if (!user) {
@@ -419,7 +420,7 @@ export const getUserById = async (req, res) => {
     const { userId } = req.params;
 
     const user = await User.findById(userId).select(
-      "firstName lastName username avatar bio achievements createdAt role"
+      "firstName lastName username avatar bio achievements createdAt role",
     );
 
     if (!user) {
@@ -469,7 +470,7 @@ export const reportUser = async (req, res) => {
     }
 
     const existingReport = reportedUser.reports.find(
-      (r) => r.reportedBy.toString() === reporterId && r.status === "pending"
+      (r) => r.reportedBy.toString() === reporterId && r.status === "pending",
     );
 
     if (existingReport) {
@@ -489,11 +490,11 @@ export const reportUser = async (req, res) => {
     await reportedUser.save();
 
     const pendingReports = reportedUser.reports.filter(
-      (r) => r.status === "pending"
+      (r) => r.status === "pending",
     );
 
     console.log(
-      `User ${reportedUser.username} reported. Total pending reports: ${pendingReports.length}`
+      `User ${reportedUser.username} reported. Total pending reports: ${pendingReports.length}`,
     );
 
     res.json({
@@ -689,7 +690,7 @@ export const deleteAccountPermanently = async (req, res) => {
         });
       } catch (err) {
         console.log(
-          `Failed to delete registration form: ${user.registrationFormPath.publicId}`
+          `Failed to delete registration form: ${user.registrationFormPath.publicId}`,
         );
       }
     }
@@ -738,7 +739,7 @@ export const reVerifyUser = async (req, res) => {
     }
 
     const pdfExtraction = await extractRegistrationFormInfo(
-      registrationForm.path
+      registrationForm.path,
     );
 
     if (!pdfExtraction.success) {

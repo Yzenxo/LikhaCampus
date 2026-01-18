@@ -296,8 +296,8 @@ const Register = () => {
                       {...register("email", {
                         required: "Required",
                         pattern: {
-                          value: /^rc\.[a-z]+\.[a-z]+@cvsu\.edu\.ph$/,
-                          message: "Invalid email",
+                          value: /^rc\.[a-z.-]+\.[a-z.-]+@cvsu\.edu\.ph$/i,
+                          message: "Invalid email format",
                         },
                       })}
                       disabled={isSubmitting}

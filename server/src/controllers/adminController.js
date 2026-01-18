@@ -22,7 +22,7 @@ export const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments({ role: { $ne: "admin" } });
     const totalProjects = await Project.countDocuments(
       { isArchived: false },
-      { "moderation.status": "active" }
+      { "moderation.status": "active" },
     );
     const totalPosts = await ForumPost.countDocuments({
       "moderation.status": "active",
@@ -47,7 +47,7 @@ export const getReportStats = async (req, res) => {
     const totalUsers = await User.countDocuments({ role: { $ne: "admin" } });
     const totalProjects = await Project.countDocuments(
       { isArchived: false },
-      { "moderation.status": "active" }
+      { "moderation.status": "active" },
     );
     const totalPosts = await ForumPost.countDocuments({
       "moderation.status": "active",
@@ -71,7 +71,7 @@ export const getReportStats = async (req, res) => {
       0,
       23,
       59,
-      59
+      59,
     );
 
     const postsThisMonth = await ForumPost.countDocuments({
@@ -312,7 +312,7 @@ export const restoreProject = async (req, res) => {
         "moderation.reviewedAt": new Date(),
         $unset: { "moderation.reports": "" },
       },
-      { new: true }
+      { new: true },
     ).populate("author", "firstName lastName username avatar");
 
     if (!project) {
@@ -339,7 +339,7 @@ export const deleteReportedProject = async (req, res) => {
         "moderation.reviewedBy": req.session.userId,
         "moderation.reviewedAt": new Date(),
       },
-      { new: true }
+      { new: true },
     );
 
     if (!project) {
@@ -459,7 +459,7 @@ export const updateSemesterSettings = async (req, res) => {
       }
 
       console.log(
-        `✅ Year level progression complete: ${promotionStats.promoted} students promoted, ${promotionStats.graduated} students graduated`
+        `✅ Year level progression complete: ${promotionStats.promoted} students promoted, ${promotionStats.graduated} students graduated`,
       );
     }
 
@@ -473,11 +473,11 @@ export const updateSemesterSettings = async (req, res) => {
             reVerificationReason: `New semester: ${currentAcademicYear} - ${currentSemester}`,
             registrationFormVerified: false,
           },
-        }
+        },
       );
 
       console.log(
-        `Flagged ${updateResult.modifiedCount} users for re-verification`
+        `Flagged ${updateResult.modifiedCount} users for re-verification`,
       );
     }
 
@@ -531,7 +531,7 @@ export const updateUserRole = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       userId,
       { role },
-      { new: true }
+      { new: true },
     ).select("-password");
 
     if (!user) {
@@ -569,7 +569,13 @@ export const getStudentProfiles = async (req, res) => {
     const userProjectsMap = {};
 
     projects.forEach((project) => {
-      const authorId = project.author._id.toString();
+      // ✅ ADD THIS CHECK
+      if (!project.author || !project.author._id) {
+        console.warn(`Skipping project ${project._id} - author missing`);
+        return; // Skip this project
+      }
+
+      const authorId = project.author._id.toString(); // ✅ Use _id not id
 
       if (!userProjectsMap[authorId]) {
         userProjectsMap[authorId] = {
@@ -596,7 +602,7 @@ export const getStudentProfiles = async (req, res) => {
 
     // Convert to array and sort by project count
     const studentProfiles = Object.values(userProjectsMap).sort(
-      (a, b) => b.totalProjects - a.totalProjects
+      (a, b) => b.totalProjects - a.totalProjects,
     );
 
     // Get available skills and categories for filters
@@ -684,7 +690,7 @@ export const dismissUserReports = async (req, res) => {
     const result = await User.updateOne(
       { _id: userId, "reports.status": "pending" },
       { $set: { "reports.$[elem].status": "dismissed" } },
-      { arrayFilters: [{ "elem.status": "pending" }] }
+      { arrayFilters: [{ "elem.status": "pending" }] },
     );
 
     if (result.matchedCount === 0) {
@@ -720,7 +726,7 @@ export const takeActionOnUser = async (req, res) => {
     await User.updateOne(
       { _id: userId, "reports.status": "pending" },
       { $set: { "reports.$[elem].status": "reviewed" } },
-      { arrayFilters: [{ "elem.status": "pending" }] }
+      { arrayFilters: [{ "elem.status": "pending" }] },
     );
 
     let updateFields = {};
@@ -744,7 +750,7 @@ export const takeActionOnUser = async (req, res) => {
             user.email,
             user.firstName,
             reason,
-            warningCount
+            warningCount,
           );
 
           if (emailResult.success) {
@@ -814,7 +820,7 @@ export const unsuspendUser = async (req, res) => {
           suspensionDate: null,
           suspensionDuration: null,
         },
-      }
+      },
     );
 
     if (result.matchedCount === 0) {
@@ -842,7 +848,7 @@ export const unbanUser = async (req, res) => {
           banReason: "",
           banDate: null,
         },
-      }
+      },
     );
 
     if (result.matchedCount === 0) {

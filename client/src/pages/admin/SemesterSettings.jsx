@@ -83,7 +83,9 @@ const SemesterSettings = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+        <span className="loading loading-spinner loading-lg">
+          Loading semester settings...
+        </span>
       </div>
     );
   }

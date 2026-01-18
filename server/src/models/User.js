@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      match: [/^rc\.[a-z]+\.[a-z]+@cvsu\.edu\.ph$/, "Invalid email"],
+      match: [/^rc\.[a-z]+\.[a-z]+@cvsu\.edu\.ph$/, "Invalid email format"],
     },
     studentNumber: { type: String, required: true, unique: true, minLength: 9 },
     yearLevel: {
